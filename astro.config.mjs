@@ -4,6 +4,6 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   site: 'https://jlfernandezfernandez.github.io',
-  base: '/vpa-monitor',
+  base: '/vivienda-coruna',
   vite: { plugins: [tailwindcss()] },
 });

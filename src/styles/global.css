@@ -28,9 +28,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100dvh;
-  background:
-    radial-gradient(circle at 8% 4%, rgb(255 255 255 / 45%), transparent 25rem),
-    var(--paper);
+  background: var(--paper);
   font-size: 16px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -181,7 +179,9 @@ h1 {
 .scan-status strong { margin-top: .18rem; font-size: .84rem; font-weight: 600; line-height: 1.45; }
 .scan-status small { margin-top: .2rem; color: var(--muted); font-size: .72rem; }
 
+.buyer-guide,
 .results,
+.public-updates,
 .coverage,
 .sources {
   border-top: 1px solid var(--line);
@@ -209,6 +209,29 @@ h1 {
   color: var(--faint);
   font-size: .74rem;
 }
+
+.buyer-guide {
+  display: grid;
+  grid-template-columns: minmax(0, .72fr) minmax(0, 1.28fr);
+  gap: clamp(2rem, 8vw, 7rem);
+}
+
+.buyer-guide h2 {
+  margin-bottom: 0;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  letter-spacing: -.035em;
+  line-height: 1.05;
+}
+
+.buyer-guide__items {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+.buyer-guide__items article { border-top: 1px solid var(--line); padding-top: 1rem; }
+.buyer-guide__items h3 { margin-bottom: .55rem; font-family: var(--sans); font-size: .88rem; font-weight: 600; letter-spacing: -.01em; }
+.buyer-guide__items p { margin-bottom: 0; color: var(--muted); font-size: .84rem; line-height: 1.65; }
 
 .empty-state {
   display: grid;
@@ -342,6 +365,27 @@ h1 {
   stroke-linejoin: round;
 }
 
+.public-updates { padding-block: 0; }
+
+.public-updates details { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.public-updates summary {
+  display: flex;
+  min-height: 76px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  cursor: pointer;
+  list-style: none;
+}
+.public-updates summary::-webkit-details-marker { display: none; }
+.public-updates summary .eyebrow { margin-bottom: .2rem; }
+.public-updates summary strong { display: block; font-family: var(--serif); font-size: clamp(1.3rem, 2vw, 1.7rem); font-weight: 500; letter-spacing: -.025em; line-height: 1.1; }
+.public-updates__hint { color: var(--pine); font-size: .76rem; font-weight: 600; white-space: nowrap; }
+.public-updates details[open] .public-updates__hint { font-size: 0; }
+.public-updates details[open] .public-updates__hint::after { content: 'Ocultar seguimiento'; font-size: .76rem; }
+.public-updates__content { padding-bottom: clamp(2.5rem, 6vw, 4.5rem); }
+.public-updates__content > p { max-width: 720px; margin: 0 0 1.6rem; color: var(--muted); font-size: .9rem; }
+
 .coverage {
   display: grid;
   grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
@@ -405,8 +449,9 @@ h1 {
 
 @media (max-width: 720px) {
   .shell { width: min(100% - 1.25rem, 1080px); }
-  .source-link { font-size: .7rem; }
-  .intro { grid-template-columns: 1fr; gap: 2.5rem; padding-block: 4rem 3.5rem; }
+  .intro, .buyer-guide { grid-template-columns: 1fr; gap: 2.5rem; }
+  .intro { padding-block: 4rem 3.5rem; }
+  .buyer-guide__items { grid-template-columns: 1fr; gap: 1.25rem; }
   h1 { font-size: clamp(3rem, 17vw, 4.6rem); }
   .section-heading { align-items: start; flex-direction: column; gap: .4rem; }
   .empty-state { grid-template-columns: 1fr; min-height: 0; }

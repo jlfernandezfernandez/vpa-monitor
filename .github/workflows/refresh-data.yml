@@ -1,4 +1,4 @@
-name: Refresh VPA data
+name: Refresh housing data
 
 on:
   schedule:
@@ -10,7 +10,7 @@ permissions:
   actions: write
 
 concurrency:
-  group: refresh-vpa-data
+  group: refresh-housing-data
   cancel-in-progress: false
 
 jobs:
@@ -34,6 +34,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/data/monitor.json
-          git commit -m "chore(data): refresh VPA opportunities"
+          git commit -m "chore(data): refresh housing monitor"
           git push
           gh workflow run deploy.yml --ref master

@@ -1,5 +1,5 @@
 {
-  "name": "vpa-monitor",
+  "name": "vivienda-coruna",
   "type": "module",
   "version": "0.0.1",
   "engines": {
@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "astro": "^7.1.1",
-    "daisyui": "^5.6.18",
     "iconv-lite": "^0.7.3",
     "rss-parser": "^3.13.0"
   },
