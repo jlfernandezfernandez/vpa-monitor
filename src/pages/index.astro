@@ -3,8 +3,7 @@ import '../styles/global.css';
 import Layout from '../layouts/Layout.astro';
 import OpportunityCard from '../components/OpportunityCard.astro';
 import FilterBar from '../components/FilterBar.astro';
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import opportunities from '../data/opportunities.json';
 
 interface Opportunity {
   hash: string;
@@ -15,19 +14,10 @@ interface Opportunity {
   snippet: string;
 }
 
-const dataPath = join(process.cwd(), 'src', 'data', 'opportunities.json');
-let opportunities: Opportunity[] = [];
-try {
-  const raw = readFileSync(dataPath, 'utf-8');
-  const parsed = JSON.parse(raw);
-  opportunities = Array.isArray(parsed) ? parsed : [];
-} catch (e) {
-  console.error('Error reading opportunities:', e);
-}
-
+const items: Opportunity[] = Array.isArray(opportunities) ? opportunities : [];
 const filtro = Astro.url.searchParams.get('filtro') || 'todas';
 
-const filtered = opportunities.filter((o) => {
+const filtered = items.filter((o) => {
   const text = `${o.title} ${o.snippet}`.toLowerCase();
   if (filtro === 'vpa') return /vpa|vivienda protegida|protección autonómica|protección pública|promoción pública/.test(text);
   if (filtro === 'cooperativa') return /cooperativa/.test(text);
@@ -56,6 +46,6 @@ const filtered = opportunities.filter((o) => {
 
   <p class="text-xs text-base-content/40 mt-8 text-center">
     Actualizado: {new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
-    · {filtered.length} de {opportunities.length} oportunidades
+    · {filtered.length} de {items.length} oportunidades
   </p>
 </Layout>
