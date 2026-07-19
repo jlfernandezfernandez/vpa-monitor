@@ -1,0 +1,48 @@
+---
+const base = import.meta.env.BASE_URL;
+---
+
+<div class="map-shell">
+  <div id="coverage-map" class="coverage-map" data-geojson-url={`${base}/coverage.geojson`} aria-label="Mapa interactivo de los municipios cubiertos"></div>
+</div>
+
+<script>
+  import L from 'leaflet';
+  import 'leaflet/dist/leaflet.css';
+
+  const element = document.querySelector('#coverage-map');
+
+  if (element instanceof HTMLElement) {
+    const map = L.map(element, {
+      attributionControl: true,
+      scrollWheelZoom: false,
+      zoomControl: true,
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 18,
+    }).addTo(map);
+
+    fetch(element.dataset.geojsonUrl || '')
+      .then((response) => response.json())
+      .then((data) => {
+        const boundaries = L.geoJSON(data, {
+          style: {
+            color: '#28594b',
+            fillColor: '#6ea88f',
+            fillOpacity: 0.24,
+            weight: 2,
+          },
+          onEachFeature(feature, layer) {
+            layer.bindTooltip(feature.properties.name, { sticky: true });
+          },
+        }).addTo(map);
+
+        map.fitBounds(boundaries.getBounds(), { padding: [16, 16] });
+      })
+      .catch(() => {
+        element.textContent = 'No se pudo cargar el mapa.';
+      });
+  }
+</script>

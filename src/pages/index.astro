@@ -1,19 +1,18 @@
 ---
 import '../styles/global.css';
 import Layout from '../layouts/Layout.astro';
+import CoverageMap from '../components/CoverageMap.astro';
 import OpportunityCard from '../components/OpportunityCard.astro';
 import monitor from '../data/monitor.json';
 
-const base = import.meta.env.BASE_URL;
 const items = Array.isArray(monitor.items) ? monitor.items : [];
 const sources = Array.isArray(monitor.sources) ? monitor.sources : [];
-const marketItems = items.filter((item) => item.sourceKind === 'market-alert');
-const publicItems = items.filter((item) => item.sourceKind !== 'market-alert');
 const healthySources = sources.filter((source) => source.ok).length;
 const checkedAt = monitor.checkedAt ? new Date(monitor.checkedAt) : null;
 const checkedLabel = checkedAt
   ? checkedAt.toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Madrid' })
   : 'Pendiente';
+const allItems = [...items].sort((a, b) => new Date(b.publishedAt || b.firstSeenAt).getTime() - new Date(a.publishedAt || a.firstSeenAt).getTime());
 ---
 
 <Layout
@@ -26,51 +25,39 @@ const checkedLabel = checkedAt
   </p>
 
   <div class="tool-layout shell">
-    <section class="results" aria-labelledby="market-title">
+    <section class="results" aria-labelledby="news-title">
       <div class="section-heading">
-        <h2 id="market-title">Novedades <span>{marketItems.length}</span></h2>
-        <p>Cooperativas y promociones detectadas en prensa local.</p>
+        <h1 id="news-title">Noticias <span>{allItems.length}</span></h1>
+        <p>Cooperativas, promociones y vivienda pública.</p>
       </div>
 
-      {marketItems.length === 0 ? (
+      {allItems.length === 0 ? (
         <p class="empty-state">Sin novedades en esta comprobación.</p>
       ) : (
         <div class="opportunity-list">
-          {marketItems.map((item) => <OpportunityCard {...item} />)}
+          {allItems.map((item) => <OpportunityCard {...item} />)}
         </div>
-      )}
-
-      {publicItems.length > 0 && (
-        <details class="public-updates">
-          <summary>Actualizaciones públicas <span>{publicItems.length}</span></summary>
-          <div class="public-updates__content opportunity-list">
-            {publicItems.map((item) => <OpportunityCard {...item} />)}
-          </div>
-        </details>
       )}
     </section>
 
-    <aside class="coverage" aria-labelledby="coverage-title">
-      <h2 id="coverage-title">Zona cubierta</h2>
-      <img src={`${base}/coverage-map.svg`} alt="Mapa de A Coruña, Arteixo, Culleredo, Oleiros, Cambre, Sada, Bergondo, Carral y Abegondo" />
-      <p>{monitor.area.length} municipios</p>
-    </aside>
-  </div>
+    <aside class="sidebar">
+      <section class="coverage" aria-labelledby="coverage-title">
+        <h2 id="coverage-title">Zona cubierta</h2>
+        <CoverageMap />
+        <p>{monitor.area.length} municipios</p>
+      </section>
 
-  {sources.length > 0 && (
-    <section class="sources shell" aria-labelledby="sources-title">
-      <details>
-        <summary id="sources-title">Fuentes <span>{sources.length}</span></summary>
+      <section class="sources" aria-labelledby="sources-title">
+        <h2 id="sources-title">Fuentes</h2>
         <ul class="source-list">
           {sources.map((source) => (
             <li>
               <span class={`source-state ${source.ok ? 'source-state--ok' : ''}`} aria-hidden="true"></span>
               <a href={source.url} target="_blank" rel="noopener noreferrer">{source.name}</a>
-              <small>{source.ok ? `${source.scanned} revisadas` : 'No disponible'}</small>
             </li>
           ))}
         </ul>
-      </details>
-    </section>
-  )}
+      </section>
+    </aside>
+  </div>
 </Layout>

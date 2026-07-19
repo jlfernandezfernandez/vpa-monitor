@@ -12,7 +12,8 @@ export interface Props {
   summary: string;
 }
 
-const { title, url, sourceKind = 'official', publishedAt, firstSeenAt, location, type, status } = Astro.props;
+const { title, url, source, sourceKind = 'official', publishedAt, firstSeenAt, location, type, status } = Astro.props;
+const sourceLabel = sourceKind === 'market-alert' ? 'Prensa local' : source;
 const date = new Date(publishedAt || firstSeenAt).toLocaleDateString('es-ES', {
   day: 'numeric',
   month: 'short',
@@ -30,6 +31,7 @@ const date = new Date(publishedAt || firstSeenAt).toLocaleDateString('es-ES', {
     <div class="opportunity__tags">
       <span>{type}</span>
       {status && <span>{status}</span>}
+      <span>{sourceLabel}</span>
     </div>
     <a class="text-link" href={url} target="_blank" rel="noopener noreferrer">
       {sourceKind === 'market-alert' ? 'Abrir' : 'Expediente'}
