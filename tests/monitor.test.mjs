@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   detectLocation,
   detectStatus,
+  isActionableMarketAlert,
   isFreshMarketAlert,
   isRelevantTitle,
   mergeOpportunities,
@@ -18,6 +19,7 @@ test('acepta únicamente A Coruña ciudad y su entorno inmediato', () => {
     ['Cooperativa de vivendas en Perillo', 'Perillo'],
     ['Cohousing en Carral para vivienda colaborativa', 'Carral'],
     ['Autopromoción de vivienda en Abegondo', 'Abegondo'],
+    ['Promoción nueva de obra nueva en Carral', 'Carral'],
     ['Promoción pública de vivienda en O Burgo', 'O Burgo'],
     ['VPP no Concello de Oleiros', 'Oleiros'],
   ];
@@ -42,6 +44,8 @@ test('no confunde la provincia de A Coruña con la ciudad', () => {
 test('descarta alertas de mercado antiguas', () => {
   assert.equal(isFreshMarketAlert({ publishedAt: '2026-07-01T00:00:00Z' }, new Date('2026-07-20T00:00:00Z')), true);
   assert.equal(isFreshMarketAlert({ publishedAt: '2025-12-01T00:00:00Z' }, new Date('2026-07-20T00:00:00Z')), false);
+  assert.equal(isActionableMarketAlert({ title: 'Costes y demanda de vivienda en A Coruña', publishedAt: '2026-07-01T00:00:00Z' }, new Date('2026-07-20T00:00:00Z')), false);
+  assert.equal(isActionableMarketAlert({ title: 'Nueva cooperativa de viviendas en Oleiros', publishedAt: '2026-07-01T00:00:00Z' }, new Date('2026-07-20T00:00:00Z')), true);
 });
 
 test('muestra solo la actualización más reciente de cada expediente oficial', () => {

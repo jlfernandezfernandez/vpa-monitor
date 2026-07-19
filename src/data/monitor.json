@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-07-19T23:02:46.840Z",
+  "checkedAt": "2026-07-19T23:07:58.424Z",
   "area": [
     "A Coruña",
     "Arteixo",
@@ -49,10 +49,10 @@
     },
     {
       "name": "Prensa local · cooperativas y promociones",
-      "url": "https://news.google.com/rss/search?q=%28%22cooperativa+de+viviendas%22+OR+cohousing+OR+autopromoci%C3%B3n%29+%28%22A+Coru%C3%B1a%22+OR+Arteixo+OR+Oleiros+OR+Culleredo+OR+Cambre+OR+Sada+OR+Carral+OR+Abegondo%29&hl=es&gl=ES&ceid=ES:es",
+      "url": "https://news.google.com/rss/search?q=%28%22cooperativa+de+viviendas%22+OR+cohousing+OR+autopromoci%C3%B3n+OR+%22promoci%C3%B3n+nueva%22+OR+%22obra+nueva%22+OR+%22promoci%C3%B3n+inmobiliaria%22%29+%28%22A+Coru%C3%B1a%22+OR+Arteixo+OR+Oleiros+OR+Culleredo+OR+Cambre+OR+Sada+OR+Carral+OR+Abegondo%29&hl=es&gl=ES&ceid=ES:es",
       "kind": "market-alert",
       "ok": true,
-      "scanned": 31
+      "scanned": 57
     }
   ],
   "items": [
@@ -63,7 +63,7 @@
       "source": "IGVS · Adjudicaciones y sorteos",
       "publishedAt": "2026-07-15T00:00:00.000Z",
       "firstSeenAt": "2026-07-19T22:48:08.625Z",
-      "lastSeenAt": "2026-07-19T23:02:46.840Z",
+      "lastSeenAt": "2026-07-19T23:07:58.424Z",
       "location": "A Coruña",
       "type": "Vivienda protegida",
       "status": null,
@@ -77,7 +77,7 @@
       "source": "IGVS · Adjudicaciones y sorteos",
       "publishedAt": "2026-07-15T00:00:00.000Z",
       "firstSeenAt": "2026-07-19T22:48:08.625Z",
-      "lastSeenAt": "2026-07-19T23:02:46.840Z",
+      "lastSeenAt": "2026-07-19T23:07:58.424Z",
       "location": "A Coruña",
       "type": "Vivienda protegida",
       "status": null,
@@ -91,7 +91,7 @@
       "source": "Prensa local · cooperativas y promociones",
       "publishedAt": "2026-07-13T19:16:28.000Z",
       "firstSeenAt": "2026-07-19T22:52:03.033Z",
-      "lastSeenAt": "2026-07-19T23:02:46.840Z",
+      "lastSeenAt": "2026-07-19T23:07:58.424Z",
       "location": "Oleiros",
       "type": "Cooperativa",
       "status": null,
@@ -99,17 +99,59 @@
       "sourceKind": "market-alert"
     },
     {
-      "id": "bec7d33addc59646",
-      "title": "Más de 450 personas optan a una de las 20 nuevas viviendas protegidas de Oleiros - La Opinión A Coruña",
-      "url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxPd04tbTE3ME1SajYteFV1aUpQX04zRHM4Q0poT1N2dGRlN1BkamxaZjI5LVRhZW8xakUxN0plU3ZyQTVsZjZENkVCVlZVVGItYUdqQ3NsbnZFS3BBbUVDcEVUYXh3Tm1vWDktUnJwZ2VHNGlYZzNNZ1h4dW9IMnNLdFR6cHlIZXJxLWZMOWRkek5RODU1VjdKZ0VRcUd2T2dHS2N2UEpORm9xdmw1d0EySFVnSUJfX3fSAbwBQVVfeXFMTWs5b3p1WGNQWHlQOGQzSDJhYnlYX3Q2SGdRZzFrMG9lUXdMV2p0OGhsNWhhd3N2dnkweHRDMk9pSTNCQVVYMmtrTTJDWWRjOGdPbkE4T29MVmJmWWlWSGRhVC1Cd2NwNDBiMVA1Zk9rdU8weGFyVzYxTm5sQmJOdjR2QTFvM0lQdVhLa1psUDNwaUZfejM2Y2ZHcUQ5cHBMMm5PS3EtUk16OG9WaWNqOFZuUlRjYjhkdThfOVQ?oc=5",
+      "id": "298fd497ac2330d8",
+      "title": "La obra nueva en Culleredo se amplía con cuatro viviendas de lujo modulares - La Opinión A Coruña",
+      "url": "https://news.google.com/rss/articles/CBMipgFBVV95cUxOTEdYRWxYVE1uZUlHZzBOREdhRzR6eXFhSHJwNXBzM2NMc0NTMUVSaXNxTU11ekhDOS0yVTlQbXhWSHQ1RjNrN0syVkhYNXZLMmtSSG9heEE2MUlNR2dHdi1GclNsN1cwUUN2dnFGYjVIM1Vxbkk4aDRkdndUZ2ZOcVRMNm5nLVJnY2hqTWNiRURQOEJpUzhsUTc4eE9LTGN2VWhpVDhn0gGrAUFVX3lxTFA5WkRhVGZRbUtSeF9JSGNtcjA4QzNwTWxVdWN4LWw1b1Z4R21kTkZPTUFyLW15MUZ0YVVrbnEzeDFtcmZzSjl2M1VUa2JVUEtqNFQ2TjhBRi1ZRG9SUV9yOGRLT3M3UHdnaHhtUm9jQU9CbjdobnBJM3p2Ml9zQVBXcVpYQmhnek9aUzBxbkNBbEpDSTQwRXpvNzFhMGdKUkRtT0FuUEEtVTdEQQ?oc=5",
       "source": "Prensa local · cooperativas y promociones",
-      "publishedAt": "2026-07-06T12:29:24.000Z",
-      "firstSeenAt": "2026-07-19T22:52:03.033Z",
-      "lastSeenAt": "2026-07-19T23:02:46.840Z",
-      "location": "Oleiros",
-      "type": "Vivienda protegida",
+      "publishedAt": "2026-06-16T07:00:00.000Z",
+      "firstSeenAt": "2026-07-19T23:06:29.923Z",
+      "lastSeenAt": "2026-07-19T23:07:58.424Z",
+      "location": "Culleredo",
+      "type": "Promoción nueva",
       "status": null,
-      "summary": "Más de 450 personas optan a una de las 20 nuevas viviendas protegidas de Oleiros La Opinión A Coruña",
+      "summary": "La obra nueva en Culleredo se amplía con cuatro viviendas de lujo modulares La Opinión A Coruña",
+      "sourceKind": "market-alert"
+    },
+    {
+      "id": "bdabb9944b86d576",
+      "title": "Metrovacesa obtiene licencia para construir 100 nuevas viviendas en A Coruña - que.es",
+      "url": "https://news.google.com/rss/articles/CBMidEFVX3lxTE9WWDVvbXdxanJpbC1PbTdHQnItOWpMSTFGZ3I5U3RRUFE2blJQZ0pBU0RQVXhQTzhjSU5yUkJwUFlxa0tSQ0d2S2NjLWNsNDh6QzFMTU11RHhLMUxNQ0VrODRtdjBHTkxSXzItWktvVjJqelIt?oc=5",
+      "source": "Prensa local · cooperativas y promociones",
+      "publishedAt": "2026-06-09T07:00:00.000Z",
+      "firstSeenAt": "2026-07-19T23:06:29.923Z",
+      "lastSeenAt": "2026-07-19T23:07:58.424Z",
+      "location": "A Coruña",
+      "type": "Promoción nueva",
+      "status": null,
+      "summary": "Metrovacesa obtiene licencia para construir 100 nuevas viviendas en A Coruña que.es",
+      "sourceKind": "market-alert"
+    },
+    {
+      "id": "5733ec77cd042b7a",
+      "title": "Así avanza Residencial Casablanca a los pies del nuevo CHUAC, en A Coruña: 241 viviendas con todos los lujos - El Español",
+      "url": "https://news.google.com/rss/articles/CBMi8wFBVV95cUxOcTVBcTdkc2llaTZtWVZSOHhDVTZMR0RKZmt6ZzFoRVBieHhkWUpjdTF5YTNzeHBMQmJlbGpyZEo4ZmNCUzRYS0FpVHN6d2VlQjhCZFBtTGo3V3lEUGo3VFZyY2RUckpEZkRDc1lzajhueU5tUzhFVkZub2pQNWM2R21aM0d0X3lrOGZEYm0zVXMyMUI4R295dWxYRGVEbU0yQXBTRnZJdy1iQl92akV5V3ZLbFpYN3Z1aUk3bTBOaWI0ak9FbGFselZ6d0RtdTJKaVdETHJ2TjNobXFJdlhiak9vNzlhckk2azVfTXdfNWQzQTTSAfgBQVVfeXFMTmFTSm45OFd3VU5ZZHBvZUNPN3czU3hRcEVXUFUxT0ZyZl9ET3V2bVFnaWlCZlJsbDV0MmtTWHBQU055ekc5dDY2MWJMX1RWNW9aRVQ1M2pjMUJldUtwNFFEdzNrMTl3ZkJRWWctQ2RGR252bGNnanJNSGlLbmgxUGF0OGM1V1VwZV9BOTJSY0xla3VvLXRqYnhiSTB6VlRQSndIMWFrOHhkRkl4RUQzSWo5VjNhTmJNbWFJeWhVd3czTi1aS2tfMGF5UUFlUnBGaURGM0JhVlpwckRjMUszX0ZzWkd0ZTF0WkYtOGhGZkstTUN3Yk1yUnQ?oc=5",
+      "source": "Prensa local · cooperativas y promociones",
+      "publishedAt": "2026-06-06T07:00:00.000Z",
+      "firstSeenAt": "2026-07-19T23:06:29.923Z",
+      "lastSeenAt": "2026-07-19T23:07:58.424Z",
+      "location": "A Coruña",
+      "type": "Promoción nueva",
+      "status": null,
+      "summary": "Así avanza Residencial Casablanca a los pies del nuevo CHUAC, en A Coruña: 241 viviendas con todos los lujos El Español",
+      "sourceKind": "market-alert"
+    },
+    {
+      "id": "64c63d0f4f78ab4c",
+      "title": "El Parque de Oza, en A Coruña, crecerá con 32 nuevas viviendas con terraza, garaje y trastero desde 315.000 euros - El Español",
+      "url": "https://news.google.com/rss/articles/CBMi9wFBVV95cUxQX1NlOUVIa3h2VHNZMjRsSVhRenNWQmN4NkJNTndvYVVXWVRFWFRMeEhGQnU5a2JOclU0YUNxb3poVnN2aXlmNnJQQzVzUWc4dXg3b21ob0ZhMnpnOUZHVHBZMWt4T3hKZmhvOWo1X1l1bXRmUURkMndOdkhDUnJweFNjdW5MT2I0Rk5pRWJOOUVmNDFOWV9udm1HbUthRG1ZMzBJR2RUdmpfMm1DTnlTUzBkZTJaQ0YxNGZmdGh0V041eVB2c3gxWVJPeXJUQ0JUT011eFBobThVZG9MMV9zUmVqZ0Z5TDA5SHZIVnVXbkM1V1N6WUNZ0gH8AUFVX3lxTE1FMTRwZDFPS0E0MDBNc2JycXpXRHRSR2tTbV9Nc3ZzbGM2emRVejE4a0pjZDk0a0w0Q2x0WUFkUmpLU3ExS2ViZXRPcDBkejFBUGk3dDMxbU1ueU5nMEdGdXdNekJrbmVzWExYazBDUHJ5Q29YdmhWY21fSmhDaEpoYjhzdElFcDdHV0V2QXFDdXdSQlRXXzFKVDZYX2lKNVUzY2tZcWtkT2ZyMzB5bW5RWHp2bV9ZWl9LeldFR0YwYnZiNFRlNXVnWTlfLUhrMDVURWhhTHUya2JHZFJxaC1kYlRZMjdTSGVvRmhwT091Z0dZaTlfZGt4eW1ENg?oc=5",
+      "source": "Prensa local · cooperativas y promociones",
+      "publishedAt": "2026-04-29T07:00:00.000Z",
+      "firstSeenAt": "2026-07-19T23:06:29.923Z",
+      "lastSeenAt": "2026-07-19T23:07:58.424Z",
+      "location": "A Coruña",
+      "type": "Promoción nueva",
+      "status": null,
+      "summary": "El Parque de Oza, en A Coruña, crecerá con 32 nuevas viviendas con terraza, garaje y trastero desde 315.000 euros El Español",
       "sourceKind": "market-alert"
     },
     {
@@ -119,7 +161,7 @@
       "source": "Prensa local · cooperativas y promociones",
       "publishedAt": "2026-04-02T07:00:00.000Z",
       "firstSeenAt": "2026-07-19T22:52:03.033Z",
-      "lastSeenAt": "2026-07-19T23:02:46.840Z",
+      "lastSeenAt": "2026-07-19T23:07:58.424Z",
       "location": "Perillo",
       "type": "Cooperativa",
       "status": null,
@@ -127,17 +169,17 @@
       "sourceKind": "market-alert"
     },
     {
-      "id": "192f3b552d66d580",
-      "title": "Un proyecto de vivienda colaborativa en Xuxán, en A Coruña, solicita licencia para construir 32 pisos - El Español",
-      "url": "https://news.google.com/rss/articles/CBMi-AFBVV95cUxQWEIxekExSkhMSG5DRjFEY09FNkJ1R0tKaUxBaC1CamtDN2dPU2tscXFiZy1vcC1xZUZLT3RaSUhQTnZRcC1NRC1JdE4wX1c2SkZUeWNIZkxkamxYSnNCQzJndTRPajdhdUhHLUo4MFJZMC1JZTAxOGtTZ3phQVBPM21TS1QtOGtXLW9Bc1RGRENmSUQxZDE3R3dHTmNZRTRieFVvTzlkaFRjeHZiNUxkRVlVdTdYV21DckRFQWxrWG5ud0FRbEtRby1LREszbjVuNUgwZWJPNUsyS2s1dlRvUVUtN0VYUFFlTVpzcnplalgwTG9jcEJDYtIB_gFBVV95cUxNdWNPS1ZTMDlOSUtVeE8tUlFmMlZPQldnR3dCWklBREFJWC03Q2k1R29ONFVXekVsNXZ5VjhobUVCZXhKZ19rbGE2MTFtZDFYTVQwUEd5WjJlTFNlcmFoTmt6bW9NUE4xTl9nWUFpY3JDUU1ZU1FHd1pkVmI4dG1HeDZTSFBHQzBYbnYwRmJPRTBSV2VGdDFTOFNjRDNKbkFRUzA4dWhGZFVFYmhwQW05cmdQbFpOa2c3VHpVQ0F0MGJKcW9icGg1VWU3RGVKc25POFhwVkg3WlRSS0toZm1iN1NSWG9IMjQ1aThEdUtwa3pmU19nblhBVVJvMFNKZw?oc=5",
+      "id": "d14fa1a6571e3e4b",
+      "title": "Una promoción de obra nueva en Culleredo pone a la venta sus últimas viviendas con vistas a la ría - La Opinión A Coruña",
+      "url": "https://news.google.com/rss/articles/CBMizwFBVV95cUxQbTdFQVBiTldoOHRBbXl0WUhIandyWm5UdmU0ckpBcVRzUmhrd3BGaEVMZDR5LTFBSEVDZHY4UnRoTXZJM0RCYmthSk5oVEJzNHVLOXRKX2RWMzdvSllQd3Y4NWdteDR2LTdQQ0VDcldFMkJxdzFCWU04TExDcHBPRWI3LWFzSms3ZkY2SE1qQ0NGTGZxd1FmdHJxV3pTMUd0MXp2U0k2YXNDTWVOX2JCVWtGN3pHU2RkaEZFRnE3a0VIX1JjR2R3dVNzZzJick3SAdQBQVVfeXFMTnRsenNOclRaUmx2TVFWX1N4V1JUUEhwcDVUdzVWejJpdG1ZNVh5STkzTkRzeHlVQ21qV0kwNi01OTFFNk5IQk01cGNMQjY1dVpKUm1qMmVkaS1EZnJOYnFObXlZZC1EZEdxUDg0eXpmWXhReUxQZGczY3BHc3FmTW9EY2FQdHZET2hCYWdhYXlVaGVwSnBDWW4zcndmb2xzc00zTFhZSDg2a3NOU2pFY1ZEVE9QYnJLMzlWdXExRXp6aUd4eWp5ZWtEUEs5WHNkTWlZeVA?oc=5",
       "source": "Prensa local · cooperativas y promociones",
-      "publishedAt": "2026-03-16T07:00:00.000Z",
-      "firstSeenAt": "2026-07-19T22:52:03.033Z",
-      "lastSeenAt": "2026-07-19T23:02:46.840Z",
-      "location": "A Coruña",
-      "type": "Cooperativa",
+      "publishedAt": "2026-01-25T08:00:00.000Z",
+      "firstSeenAt": "2026-07-19T23:06:29.923Z",
+      "lastSeenAt": "2026-07-19T23:07:58.424Z",
+      "location": "Culleredo",
+      "type": "Promoción nueva",
       "status": null,
-      "summary": "Un proyecto de vivienda colaborativa en Xuxán, en A Coruña, solicita licencia para construir 32 pisos El Español",
+      "summary": "Una promoción de obra nueva en Culleredo pone a la venta sus últimas viviendas con vistas a la ría La Opinión A Coruña",
       "sourceKind": "market-alert"
     }
   ]

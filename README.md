@@ -87,7 +87,7 @@ npm run build     # build estático en dist/
 - **Señal antes que volumen:** una lista corta y verificable es mejor que anuncios duplicados.
 - **Geografía precisa:** se filtra por municipios incluidos, no por la provincia.
 - **Fuentes diferenciadas:** lo oficial y las alertas de mercado nunca se presentan como lo mismo.
-- **Sin backend ni tracking:** HTML estático, sin cuentas, cookies propias ni JavaScript de cliente para el funcionamiento normal.
+- **Sin backend ni cuentas:** HTML estático, sin cuentas ni JavaScript de cliente para el funcionamiento normal.
 - **Contribuciones pequeñas y testeadas:** añade una prueba si cambias municipios, patrones de clasificación o reglas de deduplicación.
 
 ## Limitaciones

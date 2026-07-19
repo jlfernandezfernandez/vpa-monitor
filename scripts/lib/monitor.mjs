@@ -30,8 +30,9 @@ const PLACE_PATTERNS = [
   },
 ];
 
-const HOUSING_PATTERN = /\b(?:vpa|vpp|vivenda(?:s)?|vivienda(?:s)?|promoci[oó]n p[uú]blica|protexida(?:s)?|protegida(?:s)?|cooperativa(?:s)?|cohousing|autopromoci[oó]n|solo residencial|suelo residencial|reparcelaci[oó]n|parcela residencial)\b/i;
-const NOISE_PATTERN = /\b(?:veh[ií]culo(?:s)?|h[ií]brido(?:s)?|vestiario|vestuario)\b/i;
+const HOUSING_PATTERN = /\b(?:vpa|vpp|vivenda(?:s)?|vivienda(?:s)?|obra nueva|promoci[oó]n nueva|promoci[oó]n inmobiliaria|promoci[oó]n p[uú]blica|protexida(?:s)?|protegida(?:s)?|cooperativa(?:s)?|cohousing|autopromoci[oó]n|solo residencial|suelo residencial|reparcelaci[oó]n|parcela residencial)\b/i;
+const NOISE_PATTERN = /\b(?:veh[ií]culo(?:s)?|h[ií]brido(?:s)?|vestiario|vestuario|fotocasa|idealista)\b/i;
+const MARKET_CONTEXT_NOISE_PATTERN = /\b(?:costes?|demanda|mercado|informe|an[aá]lisis|sin construir)\b/i;
 
 export function cleanText(value = '') {
   return String(value)
@@ -63,6 +64,7 @@ export function isRelevantTitle(title = '') {
 
 export function detectType(text = '') {
   if (/\b(?:cooperativa|cohousing|autopromoci[oó]n|vivienda colaborativa)/i.test(text)) return 'Cooperativa';
+  if (/\b(?:obra nueva|promoci[oó]n nueva|promoci[oó]n inmobiliaria|nuevas viviendas|licencia para construir|residencial)\b/i.test(text)) return 'Promoción nueva';
   if (/\b(?:solo|suelo|parcela|reparcelaci[oó]n)\b/i.test(text)) return 'Suelo';
   if (/\b(?:rehabilitaci[oó]n|rexurbe)\b/i.test(text)) return 'Rehabilitación';
   return 'Vivienda protegida';
@@ -110,6 +112,10 @@ export function isFreshMarketAlert(item, now = new Date()) {
   const published = new Date(item.publishedAt || item.firstSeenAt || 0);
   const age = now.getTime() - published.getTime();
   return !Number.isNaN(published.getTime()) && age >= 0 && age <= 180 * 24 * 60 * 60 * 1000;
+}
+
+export function isActionableMarketAlert(item, now = new Date()) {
+  return isFreshMarketAlert(item, now) && !MARKET_CONTEXT_NOISE_PATTERN.test(cleanText(item.title));
 }
 
 function displayKey(item) {
