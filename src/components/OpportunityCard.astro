@@ -10,32 +10,168 @@ export interface Props {
   type: string;
   status: string | null;
   summary: string;
+  precioMin?: number | null;
+  precioMax?: number | null;
+  habitacionesMin?: number | null;
+  banosMin?: number | null;
+  promotora?: string | null;
+  totalViviendas?: number | null;
+  garaje?: boolean | null;
+  trastero?: boolean | null;
+  terraza?: boolean | null;
 }
 
-const { title, url, source, sourceKind = 'official', publishedAt, firstSeenAt, location, type, status } = Astro.props;
-const sourceLabel = sourceKind === 'market-alert' ? 'Prensa local' : source;
+const { 
+  title, 
+  url, 
+  source, 
+  sourceKind = 'official', 
+  publishedAt, 
+  firstSeenAt, 
+  location, 
+  type, 
+  status, 
+  summary,
+  precioMin = null,
+  precioMax = null,
+  habitacionesMin = null,
+  banosMin = null,
+  promotora = null,
+  totalViviendas = null,
+  garaje = null,
+  trastero = null,
+  terraza = null
+} = Astro.props;
+
+const isMarket = sourceKind === 'market-alert';
+const sourceLabel = isMarket ? 'Prensa local' : source;
 const date = new Date(publishedAt || firstSeenAt).toLocaleDateString('es-ES', {
   day: 'numeric',
   month: 'short',
   year: 'numeric',
 });
+
+// Softer badge bg colors
+const sourceBadgeBg = isMarket ? 'bg-brand-orange-soft text-brand-orange border border-brand-orange/10' : 'bg-brand-green-soft text-brand-green border border-brand-green/10';
 ---
 
-<article class="opportunity">
-  <div class="opportunity__meta">
-    <span>{location}</span>
-    <time datetime={publishedAt || firstSeenAt}>{date}</time>
-  </div>
-  <h3><a href={url} target="_blank" rel="noopener noreferrer">{title}</a></h3>
-  <div class="opportunity__footer">
-    <div class="opportunity__tags">
-      <span>{type}</span>
-      {status && <span>{status}</span>}
-      <span>{sourceLabel}</span>
+<article 
+  class="opportunity-card group relative flex flex-col justify-between rounded-2xl border border-border-soft bg-surface p-5 shadow-premium transition-all duration-300 hover:shadow-hover hover:border-border-medium"
+  data-location={location}
+  data-type={type}
+  data-source-kind={sourceKind}
+  data-precio-min={precioMin || ''}
+  data-habitaciones-min={habitacionesMin || ''}
+  data-banos-min={banosMin || ''}
+  data-garaje={garaje === true ? 'true' : ''}
+  data-trastero={trastero === true ? 'true' : ''}
+  data-terraza={terraza === true ? 'true' : ''}
+  data-text={`${title} ${location} ${type} ${summary || ''} ${promotora || ''}`.toLowerCase()}
+>
+  <div>
+    <!-- Card Top Bar: Location & Date -->
+    <div class="flex items-center justify-between gap-4 mb-3">
+      <div class="flex items-center gap-1.5">
+        <svg class="h-3.5 w-3.5 text-ink-muted/80 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24" width="14" height="14">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+        </svg>
+        <span class="text-xs font-bold tracking-wider text-ink-muted uppercase">{location}</span>
+      </div>
+      <time class="text-xs font-medium text-ink-light" datetime={publishedAt || firstSeenAt}>
+        {date}
+      </time>
     </div>
-    <a class="text-link" href={url} target="_blank" rel="noopener noreferrer">
-      {sourceKind === 'market-alert' ? 'Abrir' : 'Expediente'}
-      <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5" /></svg>
-    </a>
+
+    <!-- Title -->
+    <h3 class="text-base font-bold leading-snug tracking-tight text-ink group-hover:text-brand-green transition-colors duration-200 mb-2 md:text-lg">
+      <a href={url} target="_blank" rel="noopener noreferrer" class="focus:outline-none">
+        <span class="absolute inset-0 rounded-2xl cursor-pointer" aria-hidden="true"></span>
+        {title}
+      </a>
+    </h3>
+
+    <!-- Extracted structured properties row (LLM data) -->
+    {(precioMin || promotora || habitacionesMin || banosMin || garaje || trastero || terraza) && (
+      <div class="flex flex-wrap items-center gap-y-1.5 gap-x-2.5 mb-3.5 text-xs font-semibold text-ink-muted relative z-10 pointer-events-none">
+        {precioMin && (
+          <span class="inline-flex items-center gap-1 text-brand-green bg-brand-green-soft/40 px-2 py-0.5 rounded-md border border-brand-green/10">
+            Desde {precioMin.toLocaleString('es-ES')} €
+          </span>
+        )}
+        {promotora && (
+          <span>
+            Promueve: <span class="text-ink font-extrabold">{promotora}</span>
+          </span>
+        )}
+        {habitacionesMin && (
+          <span>
+            · {habitacionesMin} {habitacionesMin === 1 ? 'hab' : 'habs'}
+          </span>
+        )}
+        {banosMin && (
+          <span>
+            · {banosMin} {banosMin === 1 ? 'baño' : 'baños'}
+          </span>
+        )}
+        {garaje && (
+          <span class="text-ink-light inline-flex items-center gap-0.5">
+            · 🚗 Garaje
+          </span>
+        )}
+        {trastero && (
+          <span class="text-ink-light inline-flex items-center gap-0.5">
+            · 📦 Trastero
+          </span>
+        )}
+        {terraza && (
+          <span class="text-ink-light inline-flex items-center gap-0.5">
+            · ☀️ Terraza
+          </span>
+        )}
+        {totalViviendas && (
+          <span class="text-ink-light">
+            ({totalViviendas} vivs.)
+          </span>
+        )}
+      </div>
+    )}
+
+    <!-- Description -->
+    {summary && summary.trim().length > 0 && summary !== title && (
+      <p class="text-sm text-ink-muted line-clamp-2 mb-4 leading-relaxed relative z-10 pointer-events-none">
+        {summary}
+      </p>
+    )}
+  </div>
+
+  <!-- Card Footer: Unified Badges & CTA -->
+  <div class="flex flex-wrap items-center justify-between gap-3 mt-4 pt-3 border-t border-border-soft relative z-10">
+    <div class="flex flex-wrap gap-1.5">
+      <!-- Housing Type Badge -->
+      <span class="inline-flex items-center rounded-lg bg-canvas border border-border-soft px-2.5 py-0.5 text-[11px] font-semibold text-ink-muted">
+        {type}
+      </span>
+      
+      <!-- Status Badge -->
+      {status && (
+        <span class="inline-flex items-center rounded-lg bg-brand-blue-soft border border-brand-blue/10 px-2.5 py-0.5 text-[11px] font-semibold text-brand-blue">
+          {status}
+        </span>
+      )}
+      
+      <!-- Source Badge -->
+      <span class="inline-flex items-center rounded-lg px-2.5 py-0.5 text-[11px] font-semibold" class:list={[sourceBadgeBg]}>
+        {sourceLabel}
+      </span>
+    </div>
+
+    <!-- External Link Arrow -->
+    <div class="inline-flex items-center gap-1 text-xs font-bold text-brand-green group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200">
+      <span>{isMarket ? 'Abrir' : 'Ver expediente'}</span>
+      <svg class="h-4.5 w-4.5 stroke-current stroke-2 fill-none" viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+        <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 19.5 15-15m0 0H8.25m11.25 0v11.25" />
+      </svg>
+    </div>
   </div>
 </article>

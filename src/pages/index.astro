@@ -4,60 +4,812 @@ import Layout from '../layouts/Layout.astro';
 import CoverageMap from '../components/CoverageMap.astro';
 import OpportunityCard from '../components/OpportunityCard.astro';
 import monitor from '../data/monitor.json';
+import { config } from '../../scripts/lib/config.mjs';
 
 const items = Array.isArray(monitor.items) ? monitor.items : [];
 const sources = Array.isArray(monitor.sources) ? monitor.sources : [];
+const gestoras = Array.isArray(monitor.gestoras) ? monitor.gestoras : [];
 const healthySources = sources.filter((source) => source.ok).length;
 const checkedAt = monitor.checkedAt ? new Date(monitor.checkedAt) : null;
 const checkedLabel = checkedAt
   ? checkedAt.toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Madrid' })
   : 'Pendiente';
 const allItems = [...items].sort((a, b) => new Date(b.publishedAt || b.firstSeenAt).getTime() - new Date(a.publishedAt || a.firstSeenAt).getTime());
+
+// Group items by date for an editorial feed
+const groupedItems = allItems.reduce((acc, item) => {
+  const itemDate = new Date(item.publishedAt || item.firstSeenAt);
+  const dateKey = itemDate.toLocaleDateString('es-ES', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'Europe/Madrid'
+  });
+  const capitalizedKey = dateKey.charAt(0).toUpperCase() + dateKey.slice(1);
+  if (!acc[capitalizedKey]) acc[capitalizedKey] = [];
+  acc[capitalizedKey].push(item);
+  return acc;
+}, {} as Record<string, typeof allItems>);
+
+const groupedEntries = Object.entries(groupedItems);
+
+// Load values from central config to make the whole page highly configurable
+const siteTitle = config.site.title;
+const siteDescription = config.site.description;
+const headerTitle = config.site.headerTitle;
+const headerSubtitle = config.site.headerSubtitle;
+const municipalities = config.site.municipalities;
 ---
 
 <Layout
-  title="Vivienda Coruña — Cooperativas y promociones nuevas"
-  description="Monitor de cooperativas, promociones nuevas y vivienda protegida en el área de A Coruña."
+  title={siteTitle}
+  description={siteDescription}
 >
-  <p class="tool-meta shell" aria-label="Estado de la última comprobación">
-    <span class={`status-dot ${healthySources === sources.length && sources.length > 0 ? 'status-dot--ok' : ''}`} aria-hidden="true"></span>
-    Actualizado {checkedLabel} · {healthySources}/{sources.length} fuentes
-  </p>
-
-  <div class="tool-layout shell">
-    <section class="results" aria-labelledby="news-title">
-      <div class="section-heading">
-        <h1 id="news-title">Noticias <span>{allItems.length}</span></h1>
-        <p>Cooperativas, promociones y vivienda pública.</p>
+  <div class="mx-auto max-w-6xl px-4 sm:px-6">
+    <!-- Page Header -->
+    <div class="mb-8 md:mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-border-soft pb-6">
+      <div class="max-w-2xl">
+        <div class="inline-flex items-center gap-1.5 rounded-lg bg-brand-green-soft px-2.5 py-0.5 text-[11px] font-semibold text-brand-green border border-brand-green/10 mb-3">
+          <span class="flex h-1.5 w-1.5 rounded-full bg-brand-green pulse-indicator-ok"></span>
+          Seguimiento en directo
+        </div>
+        <h1 class="text-3xl font-extrabold tracking-tight text-ink md:text-4xl leading-tight">
+          {headerTitle}
+        </h1>
+        <p class="text-sm md:text-base text-ink-muted mt-3 leading-relaxed">
+          {headerSubtitle}
+        </p>
       </div>
 
-      {allItems.length === 0 ? (
-        <p class="empty-state">Sin novedades en esta comprobación.</p>
-      ) : (
-        <div class="opportunity-list">
-          {allItems.map((item) => <OpportunityCard {...item} />)}
+      <!-- Crawler health metric card -->
+      <div class="flex-shrink-0 flex flex-col justify-between border border-border-soft bg-surface p-5 rounded-2xl shadow-premium min-w-[280px]">
+        <div class="flex items-center justify-between border-b border-border-soft pb-2.5">
+          <span class="text-xs font-bold text-ink-muted uppercase tracking-wider">Estado del Rastreador</span>
+          <span class="flex h-2.5 w-2.5 rounded-full bg-status-ok pulse-indicator-ok" aria-hidden="true"></span>
         </div>
-      )}
-    </section>
+        <div class="text-xs text-ink-muted space-y-1.5 mt-3">
+          <div class="flex justify-between">
+            <span>Última comprobación:</span>
+            <strong class="text-ink font-semibold">{checkedLabel}</strong>
+          </div>
+          <div class="flex justify-between">
+            <span>Fuentes operativas:</span>
+            <strong class="text-ink font-semibold">{healthySources} de {sources.length}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    <aside class="sidebar">
-      <section class="coverage" aria-labelledby="coverage-title">
-        <h2 id="coverage-title">Zona cubierta</h2>
-        <CoverageMap />
-        <p>{monitor.area.length} municipios</p>
-      </section>
+    <!-- Navigation Tabs -->
+    <div class="mb-6 flex border-b border-border-soft">
+      <button
+        id="tab-novedades"
+        class="border-b-2 border-brand-green px-4 py-2.5 text-sm font-bold text-brand-green focus:outline-none transition-all flex items-center gap-2"
+        role="tab"
+        aria-selected="true"
+      >
+        <svg class="h-4 w-4 stroke-current fill-none stroke-2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.75c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75A2.25 2.25 0 0 1 4.5 4.5h9a2.25 2.25 0 0 1 2.25 2.25M9 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h9a2.25 2.25 0 0 1 2.25 2.25v11.25m-12 0h12" />
+        </svg>
+        Novedades en Directo
+      </button>
+      <button
+        id="tab-directorio"
+        class="border-b-2 border-transparent px-4 py-2.5 text-sm font-semibold text-ink-muted hover:text-ink hover:border-border focus:outline-none transition-all flex items-center gap-2"
+        role="tab"
+        aria-selected="false"
+      >
+        <svg class="h-4 w-4 stroke-current fill-none stroke-2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21h10.5V3.75c0-.621-.504-1.125-1.125-1.125H7.875c-.621 0-1.125.504-1.125 1.125V21Z" />
+        </svg>
+        Directorio de Gestoras
+      </button>
+    </div>
 
-      <section class="sources" aria-labelledby="sources-title">
-        <h2 id="sources-title">Fuentes</h2>
-        <ul class="source-list">
-          {sources.map((source) => (
-            <li>
-              <span class={`source-state ${source.ok ? 'source-state--ok' : ''}`} aria-hidden="true"></span>
-              <a href={source.url} target="_blank" rel="noopener noreferrer">{source.name}</a>
-            </li>
-          ))}
-        </ul>
-      </section>
-    </aside>
+    <!-- Novedades Section (Visible by default) -->
+    <div id="novedades-section">
+      <!-- Layout Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <!-- Left Column: Search & Grouped Feed -->
+      <div class="lg:col-span-2 flex flex-col gap-6">
+        
+        <!-- Card 1: Búsqueda y Ubicación -->
+        <div class="border border-border-soft bg-surface p-5 rounded-2xl shadow-premium flex flex-col gap-4">
+          <!-- Text Search input - Height explicitly 40px (h-10) -->
+          <div class="relative flex items-center h-10 w-full">
+            <input 
+              type="text" 
+              id="search-input" 
+              placeholder="Buscar promoción, promotora, calle, tipo..." 
+              class="w-full pl-10 pr-4 h-full rounded-xl border border-border-soft bg-canvas text-sm text-ink placeholder-ink-light focus:outline-none focus:border-brand-green/45 focus:ring-1 focus:ring-brand-green/30 transition-all"
+            />
+            <svg class="absolute left-3.5 h-4 w-4 text-ink-light fill-none stroke-current stroke-2" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.602 10.602Z" />
+            </svg>
+          </div>
+
+          <!-- Filters: Signal & Location -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-border-soft">
+            <!-- Source filter -->
+            <div class="flex flex-col gap-2">
+              <span class="text-xs font-bold text-ink-muted uppercase tracking-wider">Tipo de señal</span>
+              <div class="flex rounded-xl bg-canvas p-1 border border-border-soft h-10 items-center">
+                <button 
+                  class="flex-1 text-center h-8 rounded-lg text-xs sm:text-sm font-semibold bg-brand-green text-surface transition-all cursor-pointer"
+                  data-filter-source="all"
+                >
+                  Todas
+                </button>
+                <button 
+                  class="flex-1 text-center h-8 rounded-lg text-xs sm:text-sm font-semibold text-ink-muted hover:bg-surface-hover transition-all cursor-pointer"
+                  data-filter-source="official"
+                >
+                  Oficiales
+                </button>
+                <button 
+                  class="flex-1 text-center h-8 rounded-lg text-xs sm:text-sm font-semibold text-ink-muted hover:bg-surface-hover transition-all cursor-pointer"
+                  data-filter-source="market-alert"
+                >
+                  Prensa
+                </button>
+              </div>
+            </div>
+
+            <!-- Locations filter -->
+            <div class="flex flex-col gap-2">
+              <span class="text-xs font-bold text-ink-muted uppercase tracking-wider">Municipio</span>
+              <div class="flex flex-wrap gap-1.5 items-center min-h-10">
+                <button 
+                  class="h-8 px-3 inline-flex items-center rounded-lg border text-xs sm:text-sm font-semibold bg-brand-green-soft text-brand-green border-brand-green/20 cursor-pointer transition-all"
+                  data-filter-location="all"
+                >
+                  Todos
+                </button>
+                {municipalities.map(loc => (
+                  <button 
+                    class="h-8 px-3 inline-flex items-center rounded-lg border text-xs sm:text-sm font-semibold bg-surface text-ink-muted border-border-soft hover:border-border-medium hover:bg-surface-hover transition-all cursor-pointer"
+                    data-filter-location={loc}
+                  >
+                    {loc}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Características del Piso -->
+        <div class="border border-border-soft bg-surface p-5 rounded-2xl shadow-premium flex flex-col gap-4">
+          <h3 class="text-xs font-bold text-ink-muted uppercase tracking-wider border-b border-border-soft pb-2">
+            Características de la Vivienda
+          </h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Price Slider -->
+            <div class="flex flex-col gap-2">
+              <div class="flex justify-between items-center">
+                <span class="text-xs font-bold text-ink-muted uppercase tracking-wider">Precio máximo</span>
+                <span id="price-display" class="inline-flex items-center rounded-lg bg-brand-green-soft px-2.5 py-0.5 text-[11px] font-semibold text-brand-green border border-brand-green/10">
+                  Cualquier precio
+                </span>
+              </div>
+              <div class="flex items-center h-10">
+                <input 
+                  type="range" 
+                  id="price-range" 
+                  min="150000" 
+                  max="600000" 
+                  step="25000" 
+                  value="600000" 
+                  class="w-full accent-brand-green cursor-pointer h-1.5 bg-canvas rounded-lg appearance-none border border-border-soft"
+                />
+              </div>
+            </div>
+
+            <!-- Bedrooms Filter -->
+            <div class="flex flex-col gap-2">
+              <span class="text-xs font-bold text-ink-muted uppercase tracking-wider">Dormitorios</span>
+              <div class="flex rounded-xl bg-canvas p-1 border border-border-soft h-10 items-center">
+                <button 
+                  class="flex-1 text-center h-8 rounded-lg text-xs sm:text-sm font-semibold bg-brand-green text-surface transition-all cursor-pointer"
+                  data-filter-rooms="0"
+                >
+                  Todos
+                </button>
+                <button 
+                  class="flex-1 text-center h-8 rounded-lg text-xs sm:text-sm font-semibold text-ink-muted hover:bg-surface-hover transition-all cursor-pointer"
+                  data-filter-rooms="1"
+                >
+                  1+
+                </button>
+                <button 
+                  class="flex-1 text-center h-8 rounded-lg text-xs sm:text-sm font-semibold text-ink-muted hover:bg-surface-hover transition-all cursor-pointer"
+                  data-filter-rooms="2"
+                >
+                  2+
+                </button>
+                <button 
+                  class="flex-1 text-center h-8 rounded-lg text-xs sm:text-sm font-semibold text-ink-muted hover:bg-surface-hover transition-all cursor-pointer"
+                  data-filter-rooms="3"
+                >
+                  3+
+                </button>
+              </div>
+            </div>
+
+            <!-- Bathrooms Filter -->
+            <div class="flex flex-col gap-2">
+              <span class="text-xs font-bold text-ink-muted uppercase tracking-wider">Baños</span>
+              <div class="flex rounded-xl bg-canvas p-1 border border-border-soft h-10 items-center">
+                <button 
+                  class="flex-1 text-center h-8 rounded-lg text-xs sm:text-sm font-semibold bg-brand-green text-surface transition-all cursor-pointer"
+                  data-filter-baths="0"
+                >
+                  Todos
+                </button>
+                <button 
+                  class="flex-1 text-center h-8 rounded-lg text-xs sm:text-sm font-semibold text-ink-muted hover:bg-surface-hover transition-all cursor-pointer"
+                  data-filter-baths="1"
+                >
+                  1+
+                </button>
+                <button 
+                  class="flex-1 text-center h-8 rounded-lg text-xs sm:text-sm font-semibold text-ink-muted hover:bg-surface-hover transition-all cursor-pointer"
+                  data-filter-baths="2"
+                >
+                  2+
+                </button>
+                <button 
+                  class="flex-1 text-center h-8 rounded-lg text-xs sm:text-sm font-semibold text-ink-muted hover:bg-surface-hover transition-all cursor-pointer"
+                  data-filter-baths="3"
+                >
+                  3+
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Extras Checkboxes -->
+          <div class="flex flex-col gap-2 pt-2 border-t border-border-soft">
+            <span class="text-xs font-bold text-ink-muted uppercase tracking-wider">Equipamiento adicional</span>
+            <div class="flex flex-wrap gap-4 items-center min-h-10">
+              <label class="inline-flex items-center gap-2 cursor-pointer text-xs sm:text-sm font-semibold text-ink-muted select-none">
+                <input 
+                  type="checkbox" 
+                  id="filter-garage" 
+                  class="h-4 w-4 rounded border-border-soft accent-brand-green cursor-pointer" 
+                />
+                <span>🚗 Con Garaje</span>
+              </label>
+              <label class="inline-flex items-center gap-2 cursor-pointer text-xs sm:text-sm font-semibold text-ink-muted select-none">
+                <input 
+                  type="checkbox" 
+                  id="filter-storage" 
+                  class="h-4 w-4 rounded border-border-soft accent-brand-green cursor-pointer" 
+                />
+                <span>📦 Con Trastero</span>
+              </label>
+              <label class="inline-flex items-center gap-2 cursor-pointer text-xs sm:text-sm font-semibold text-ink-muted select-none">
+                <input 
+                  type="checkbox" 
+                  id="filter-terrace" 
+                  class="h-4 w-4 rounded border-border-soft accent-brand-green cursor-pointer" 
+                />
+                <span>☀️ Con Terraza</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section header with results counter -->
+        <div class="flex items-center justify-between pb-2 px-1 mt-4">
+          <h2 class="text-lg font-bold text-ink flex items-center gap-2">
+            Novedades detectadas
+            <span 
+              id="active-count" 
+              class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-lg bg-brand-green-soft text-brand-green border border-brand-green/10 text-[11px] font-semibold"
+            >
+              {allItems.length}
+            </span>
+          </h2>
+          <span class="text-xs text-ink-muted">Ordenado por publicación reciente</span>
+        </div>
+
+        <!-- Grouped Bulletin Feed -->
+        {groupedEntries.length === 0 ? (
+          <div class="p-10 text-center rounded-2xl border border-border-soft text-ink-muted bg-surface text-sm">
+            Sin novedades en esta comprobación.
+          </div>
+        ) : (
+          <div class="flex flex-col gap-8" id="opportunities-feed">
+            {groupedEntries.map(([dateKey, itemsGroup]) => (
+              <div class="date-group flex flex-col gap-3" data-date={dateKey}>
+                <!-- Date Header -->
+                <h3 class="text-sm font-bold text-ink-muted border-b border-border-soft pb-2 mt-2">
+                  {dateKey}
+                </h3>
+                <div class="grid grid-cols-1 gap-4">
+                  {itemsGroup.map((item) => <OpportunityCard {...item} />)}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <!-- Search Empty State -->
+        <div 
+          id="empty-search-state" 
+          class="hidden p-12 text-center rounded-2xl border border-border-soft bg-surface"
+        >
+          <svg class="mx-auto h-10 w-10 text-ink-light fill-none stroke-current stroke-2" viewBox="0 0 24 24" width="40" height="40">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+          </svg>
+          <h3 class="mt-4 text-base font-bold text-ink">No hay resultados</h3>
+          <p class="mt-1.5 text-sm text-ink-muted">Intenta ajustar los términos o filtros seleccionados.</p>
+        </div>
+      </div>
+
+      <!-- Right Column: Sidebar -->
+      <aside class="flex flex-col gap-6">
+        
+        <!-- Coverage Map Section -->
+        <section class="border border-border-soft bg-surface p-5 rounded-2xl shadow-premium" aria-labelledby="coverage-title">
+          <div class="flex items-center justify-between mb-4">
+            <h2 id="coverage-title" class="text-base font-bold text-ink">Área de Seguimiento</h2>
+            <span class="inline-flex items-center rounded-lg bg-brand-green-soft px-2.5 py-0.5 text-[11px] font-semibold text-brand-green border border-brand-green/10">
+              {monitor.area.length} municipios
+            </span>
+          </div>
+          <CoverageMap />
+          <p class="text-xs text-ink-muted mt-3 leading-relaxed">
+            Área de monitorización restringida a A Coruña y su corona metropolitana inmediata.
+          </p>
+        </section>
+
+        <!-- Sources Log Section -->
+        <section class="border border-border-soft bg-surface p-5 rounded-2xl shadow-premium" aria-labelledby="sources-title">
+          <h2 id="sources-title" class="text-base font-bold text-ink mb-4">Fuentes de Datos</h2>
+          <ul class="divide-y divide-border-soft">
+            {sources.map((source) => (
+              <li class="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <span 
+                    class={`h-2.5 w-2.5 rounded-full flex-shrink-0 ${source.ok ? 'bg-status-ok pulse-indicator-ok' : 'bg-status-error pulse-indicator-warning'}`} 
+                    aria-hidden="true"
+                    title={source.ok ? 'Fuente operativa' : 'Problema de conexión'}
+                  ></span>
+                  <a 
+                    href={source.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    class="text-xs font-bold text-ink hover:text-brand-green hover:underline truncate"
+                  >
+                    {source.name}
+                  </a>
+                </div>
+                <span class="inline-flex items-center rounded-lg bg-canvas border border-border-soft px-2.5 py-0.5 text-[11px] font-semibold text-ink-light flex-shrink-0">
+                  {source.scanned || 0} reg
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <!-- Quick Guide concepts Section -->
+        <section class="border border-border-soft bg-surface p-5 rounded-2xl shadow-premium text-sm" aria-labelledby="edu-title">
+          <h2 id="edu-title" class="text-base font-bold text-ink border-b border-border-soft pb-2 mb-3.5">Guía de Conceptos</h2>
+          <div class="space-y-4 text-ink-muted leading-relaxed">
+            <div>
+              <span class="font-bold text-ink block mb-0.5 text-sm">VPP (Vivienda de Promoción Pública)</span>
+              <p class="text-xs sm:text-sm">Promovida por la Xunta (IGVS) y adjudicada por sorteo público y reglado de demandantes.</p>
+            </div>
+            <div>
+              <span class="font-bold text-ink block mb-0.5 text-sm">VPA (Vivienda de Protección Autonómica)</span>
+              <p class="text-xs sm:text-sm">Vivienda protegida de promotores privados o cooperativas, con precios máximos fijados legalmente.</p>
+            </div>
+            <div>
+              <span class="font-bold text-ink block mb-0.5 text-sm">Cooperativas de Vivienda</span>
+              <p class="text-xs sm:text-sm">Socios agrupados que autopromueven viviendas a precio de coste. No exigen registro oficial salvo en VPP/VPA.</p>
+            </div>
+            <div class="pt-3 border-t border-border-soft">
+              <a 
+                href="https://igvs.xunta.gal/es/registro-de-demandantes-de-vivienda-protegida" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                class="inline-flex items-center gap-1 text-xs font-bold text-brand-green hover:underline"
+              >
+                Registro de Demandantes (Xunta)
+                <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </a>
+            </div>
+          </div>
+        </section>
+
+      </aside>
+    </div>
+  </div>
+
+  <!-- Directorio de Gestoras Section (Hidden by default) -->
+  <div id="directorio-section" class="hidden">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {gestoras.map((gestora) => (
+        <div class="border border-border-soft bg-surface p-6 rounded-2xl shadow-premium flex flex-col justify-between hover:translate-y-[-2px] transition-all duration-200 animate-fade-in">
+          <div>
+            <!-- Header -->
+            <div class="flex items-center gap-4 border-b border-border-soft pb-4 mb-4">
+              <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-green-soft text-brand-green font-extrabold text-base border border-brand-green/10 shadow-sm">
+                {gestora.logo}
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-ink">{gestora.name}</h3>
+                <a 
+                  href={gestora.website} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  class="text-xs text-brand-green hover:underline flex items-center gap-1 mt-0.5"
+                >
+                  <span>{gestora.website.replace('https://', '').replace('http://', '')}</span>
+                  <svg class="h-3 w-3 stroke-current fill-none stroke-2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <p class="text-sm text-ink-muted leading-relaxed mb-4">
+              {gestora.description}
+            </p>
+
+            <!-- Contacts -->
+            <div class="space-y-2 mb-6">
+              <div class="flex items-center gap-2.5 text-xs text-ink-muted">
+                <span class="text-base">📍</span>
+                <span>{gestora.address}</span>
+              </div>
+              <div class="flex items-center gap-2.5 text-xs text-ink-muted">
+                <span class="text-base">📞</span>
+                <a href={`tel:${gestora.phone.replace(/\s+/g, '')}`} class="hover:text-brand-green transition-colors">{gestora.phone}</a>
+              </div>
+              <div class="flex items-center gap-2.5 text-xs text-ink-muted">
+                <span class="text-base">✉️</span>
+                <a href={`mailto:${gestora.email}`} class="hover:text-brand-green transition-colors">{gestora.email}</a>
+              </div>
+            </div>
+
+            <!-- Promotions in area -->
+            <div class="border-t border-border-soft pt-4 mt-4">
+              <span class="text-xs font-bold text-ink uppercase tracking-wider block mb-3">
+                Cooperativas y promociones en la zona
+              </span>
+              <div class="space-y-3">
+                {gestora.promotions.map((promo) => (
+                  <div class="bg-canvas border border-border-soft p-3 rounded-xl flex flex-col gap-1.5 relative overflow-hidden">
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="text-sm font-bold text-ink">{promo.name}</span>
+                      <span class={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                        promo.status === 'Comercialización' 
+                          ? 'bg-status-ok/10 text-brand-green border-status-ok/25' 
+                          : promo.status === 'En construcción'
+                          ? 'bg-amber-500/10 text-amber-600 border-amber-500/25'
+                          : promo.status === 'Entregada'
+                          ? 'bg-blue-500/10 text-blue-600 border-blue-500/25'
+                          : 'bg-ink-muted/10 text-ink-muted border-border-soft'
+                      }`}>
+                        {promo.status}
+                      </span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs text-ink-muted mt-0.5">
+                      <span>📍 {promo.location}</span>
+                      <span class="text-right max-w-[60%] truncate">{promo.details}</span>
+                    </div>
+                    {promo.link && (
+                      <a 
+                        href={promo.link} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        class="text-[11px] font-semibold text-brand-green hover:underline mt-2 self-start flex items-center gap-1"
+                      >
+                        Ver detalles de la promoción
+                        <svg class="h-3 w-3 stroke-current fill-none stroke-2" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                        </svg>
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <!-- Call to action -->
+          <div class="mt-6 pt-4 border-t border-border-soft">
+            <a 
+              href={gestora.website} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              class="w-full bg-brand-green text-surface text-center font-bold py-2.5 px-4 rounded-xl shadow-sm hover:bg-brand-green-hover hover:-translate-y-[1px] active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm"
+            >
+              <span>Visitar Web Oficial de la Gestora</span>
+              <svg class="h-4 w-4 stroke-current fill-none stroke-2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+              </svg>
+            </a>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
   </div>
 </Layout>
+
+<!-- Client Filtering Javascript -->
+<script>
+  const searchInput = document.getElementById('search-input') as HTMLInputElement;
+  const sourceFilters = document.querySelectorAll('[data-filter-source]');
+  const locationFilters = document.querySelectorAll('[data-filter-location]');
+  const roomFilters = document.querySelectorAll('[data-filter-rooms]');
+  const bathFilters = document.querySelectorAll('[data-filter-baths]');
+  const priceRange = document.getElementById('price-range') as HTMLInputElement;
+  const priceDisplay = document.getElementById('price-display');
+  
+  // New features checkboxes
+  const filterGarage = document.getElementById('filter-garage') as HTMLInputElement;
+  const filterStorage = document.getElementById('filter-storage') as HTMLInputElement;
+  const filterTerrace = document.getElementById('filter-terrace') as HTMLInputElement;
+
+  const opportunityCards = document.querySelectorAll('.opportunity-card') as NodeListOf<HTMLElement>;
+  const dateGroups = document.querySelectorAll('.date-group') as NodeListOf<HTMLElement>;
+  const activeCountEl = document.getElementById('active-count');
+  const emptyStateEl = document.getElementById('empty-search-state');
+
+  // Tab navigation toggling
+  const tabNovedades = document.getElementById('tab-novedades');
+  const tabDirectorio = document.getElementById('tab-directorio');
+  const novedadesSection = document.getElementById('novedades-section');
+  const directorioSection = document.getElementById('directorio-section');
+
+  if (tabNovedades && tabDirectorio && novedadesSection && directorioSection) {
+    tabNovedades.addEventListener('click', () => {
+      // Toggle tabs styling
+      tabNovedades.classList.add('border-brand-green', 'text-brand-green');
+      tabNovedades.classList.remove('border-transparent', 'text-ink-muted');
+      tabNovedades.setAttribute('aria-selected', 'true');
+
+      tabDirectorio.classList.remove('border-brand-green', 'text-brand-green');
+      tabDirectorio.classList.add('border-transparent', 'text-ink-muted');
+      tabDirectorio.setAttribute('aria-selected', 'false');
+
+      // Toggle views visibility
+      novedadesSection.classList.remove('hidden');
+      directorioSection.classList.add('hidden');
+    });
+
+    tabDirectorio.addEventListener('click', () => {
+      // Toggle tabs styling
+      tabDirectorio.classList.add('border-brand-green', 'text-brand-green');
+      tabDirectorio.classList.remove('border-transparent', 'text-ink-muted');
+      tabDirectorio.setAttribute('aria-selected', 'true');
+
+      tabNovedades.classList.remove('border-brand-green', 'text-brand-green');
+      tabNovedades.classList.add('border-transparent', 'text-ink-muted');
+      tabNovedades.setAttribute('aria-selected', 'false');
+
+      // Toggle views visibility
+      directorioSection.classList.remove('hidden');
+      novedadesSection.classList.add('hidden');
+    });
+  }
+
+  let searchVal = '';
+  let activeSource = 'all';
+  let activeLocation = 'all';
+  let maxPrice = 600000; 
+  let minRooms = 0; 
+  let minBaths = 0;
+  let needGarage = false;
+  let needStorage = false;
+  let needTerrace = false;
+
+  function updateFilters() {
+    let visibleCount = 0;
+
+    dateGroups.forEach(group => {
+      const cards = group.querySelectorAll('.opportunity-card') as NodeListOf<HTMLElement>;
+      let groupHasMatches = false;
+
+      cards.forEach(card => {
+        const text = card.getAttribute('data-text') || '';
+        const location = card.getAttribute('data-location') || '';
+        const sourceKind = card.getAttribute('data-source-kind') || '';
+        
+        // LLM data attributes
+        const cardPriceAttr = card.getAttribute('data-precio-min');
+        const cardRoomsAttr = card.getAttribute('data-habitaciones-min');
+        const cardBathsAttr = card.getAttribute('data-banos-min');
+        const hasGarageAttr = card.getAttribute('data-garaje') === 'true';
+        const hasStorageAttr = card.getAttribute('data-trastero') === 'true';
+        const hasTerraceAttr = card.getAttribute('data-terraza') === 'true';
+
+        const cardPrice = cardPriceAttr ? parseInt(cardPriceAttr, 10) : null;
+        const cardRooms = cardRoomsAttr ? parseInt(cardRoomsAttr, 10) : null;
+        const cardBaths = cardBathsAttr ? parseInt(cardBathsAttr, 10) : null;
+
+        const matchesSearch = text.includes(searchVal.toLowerCase());
+        const matchesSource = activeSource === 'all' || sourceKind === activeSource;
+        
+        let matchesLocation = false;
+        if (activeLocation === 'all') {
+          matchesLocation = true;
+        } else {
+          if (activeLocation === 'Oleiros') {
+            matchesLocation = location === 'Oleiros' || location.includes('Perillo') || location.includes('Santa Cruz');
+          } else if (activeLocation === 'Culleredo') {
+            matchesLocation = location === 'Culleredo' || location.includes('O Burgo');
+          } else {
+            matchesLocation = location === activeLocation;
+          }
+        }
+
+        // Price Filter
+        const matchesPrice = maxPrice === 600000 || cardPrice === null || cardPrice <= maxPrice;
+
+        // Rooms Filter
+        const matchesRooms = minRooms === 0 || cardRooms === null || cardRooms >= minRooms;
+
+        // Baths Filter
+        const matchesBaths = minBaths === 0 || cardBaths === null || cardBaths >= minBaths;
+
+        // Features Filters
+        const matchesGarage = !needGarage || hasGarageAttr;
+        const matchesStorage = !needStorage || hasStorageAttr;
+        const matchesTerrace = !needTerrace || hasTerraceAttr;
+
+        if (
+          matchesSearch && 
+          matchesSource && 
+          matchesLocation && 
+          matchesPrice && 
+          matchesRooms &&
+          matchesBaths &&
+          matchesGarage &&
+          matchesStorage &&
+          matchesTerrace
+        ) {
+          card.style.display = 'flex';
+          groupHasMatches = true;
+          visibleCount++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      // Show/hide group depending on matches
+      if (groupHasMatches) {
+        group.style.display = 'block';
+      } else {
+        group.style.display = 'none';
+      }
+    });
+
+    if (activeCountEl) {
+      activeCountEl.textContent = String(visibleCount);
+    }
+
+    if (emptyStateEl) {
+      if (visibleCount === 0) {
+        emptyStateEl.classList.remove('hidden');
+      } else {
+        emptyStateEl.classList.add('hidden');
+      }
+    }
+  }
+
+  // Bind input search
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      searchVal = (e.target as HTMLInputElement).value;
+      updateFilters();
+    });
+  }
+
+  // Bind source toggle filter buttons
+  sourceFilters.forEach(btn => {
+    btn.addEventListener('click', () => {
+      sourceFilters.forEach(b => {
+        b.classList.remove('bg-brand-green', 'text-surface');
+        b.classList.add('text-ink-muted', 'hover:bg-surface-hover');
+      });
+      
+      btn.classList.remove('text-ink-muted', 'hover:bg-surface-hover');
+      btn.classList.add('bg-brand-green', 'text-surface');
+      
+      activeSource = btn.getAttribute('data-filter-source') || 'all';
+      updateFilters();
+    });
+  });
+
+  // Bind location toggle filter chips
+  locationFilters.forEach(btn => {
+    btn.addEventListener('click', () => {
+      locationFilters.forEach(b => {
+        b.classList.remove('bg-brand-green-soft', 'text-brand-green', 'border-brand-green/20');
+        b.classList.add('bg-surface', 'text-ink-muted', 'border-border-soft', 'hover:border-border-strong');
+      });
+      
+      btn.classList.remove('bg-surface', 'text-ink-muted', 'border-border-soft', 'hover:border-border-strong');
+      btn.classList.add('bg-brand-green-soft', 'text-brand-green', 'border-brand-green/20');
+      
+      activeLocation = btn.getAttribute('data-filter-location') || 'all';
+      updateFilters();
+    });
+  });
+
+  // Bind price range slider
+  if (priceRange && priceDisplay) {
+    priceRange.addEventListener('input', (e) => {
+      const val = parseInt((e.target as HTMLInputElement).value, 10);
+      maxPrice = val;
+      if (val === 600000) {
+        priceDisplay.textContent = 'Cualquier precio';
+      } else {
+        priceDisplay.textContent = `Menos de ${val.toLocaleString('es-ES')} €`;
+      }
+      updateFilters();
+    });
+  }
+
+  // Bind rooms toggle buttons
+  roomFilters.forEach(btn => {
+    btn.addEventListener('click', () => {
+      roomFilters.forEach(b => {
+        b.classList.remove('bg-brand-green', 'text-surface');
+        b.classList.add('text-ink-muted', 'hover:bg-surface-hover');
+      });
+      
+      btn.classList.remove('text-ink-muted', 'hover:bg-surface-hover');
+      btn.classList.add('bg-brand-green', 'text-surface');
+      
+      minRooms = parseInt(btn.getAttribute('data-filter-rooms') || '0', 10);
+      updateFilters();
+    });
+  });
+
+  // Bind baths toggle buttons
+  bathFilters.forEach(btn => {
+    btn.addEventListener('click', () => {
+      bathFilters.forEach(b => {
+        b.classList.remove('bg-brand-green', 'text-surface');
+        b.classList.add('text-ink-muted', 'hover:bg-surface-hover');
+      });
+      
+      btn.classList.remove('text-ink-muted', 'hover:bg-surface-hover');
+      btn.classList.add('bg-brand-green', 'text-surface');
+      
+      minBaths = parseInt(btn.getAttribute('data-filter-baths') || '0', 10);
+      updateFilters();
+    });
+  });
+
+  // Bind new features checkboxes
+  if (filterGarage) {
+    filterGarage.addEventListener('change', (e) => {
+      needGarage = (e.target as HTMLInputElement).checked;
+      updateFilters();
+    });
+  }
+  if (filterStorage) {
+    filterStorage.addEventListener('change', (e) => {
+      needStorage = (e.target as HTMLInputElement).checked;
+      updateFilters();
+    });
+  }
+  if (filterTerrace) {
+    filterTerrace.addEventListener('change', (e) => {
+      needTerrace = (e.target as HTMLInputElement).checked;
+      updateFilters();
+    });
+  }
+</script>

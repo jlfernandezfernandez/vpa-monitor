@@ -1,99 +1,97 @@
-# Vivienda Coruña
+# Vivienda Coruña — Monitor de Cooperativas y Obra Nueva
 
-Monitor abierto de **cooperativas, promociones nuevas y vivienda protegida** en el área metropolitana de A Coruña.
+Monitor de código abierto y sin servidores para detectar señales tempranas de **cooperativas de viviendas, promociones de obra nueva y vivienda protegida (VPA/VPP)** en el área metropolitana de A Coruña.
 
-La prioridad es detectar señales tempranas: constitución de cooperativas, búsqueda de socios, licencias y promociones que empiezan a moverse. La vivienda protegida se muestra por separado como seguimiento público.
+---
 
-## Qué cubre
+## 🎯 Qué cubre
 
-El monitor trabaja con una lista geográfica explícita para evitar confundir la ciudad de A Coruña con toda la provincia:
+El monitor filtra geográficamente de forma explícita para evitar falsos positivos provinciales y centrarse únicamente en la ciudad y su entorno inmediato:
 
-- A Coruña
-- Arteixo
-- Culleredo y O Burgo
-- Oleiros, Perillo y Santa Cruz
-- Cambre
-- Sada
-- Bergondo
-- Carral
-- Abegondo
+* A Coruña (incluyendo *Xuxán*, *Someso*, *Visma*, *Mesoiro*)
+* Oleiros (incluyendo *Xaz*, *Perillo*, *Santa Cruz*, *Mera*)
+* Arteixo
+* Culleredo (incluyendo *O Burgo*)
+* Cambre
+* Sada
+* Bergondo
+* Carral
+* Abegondo
 
-Ferrol, Santiago y el resto de la provincia quedan fuera deliberadamente.
+---
 
-## Qué encontrarás
+## 🛠️ Arquitectura Híbrida y Datos (GitOps)
 
-| Señal | Para qué sirve | Procedencia |
-| --- | --- | --- |
-| **Cooperativas y promociones tempranas** | Detectar movimientos antes de que una promoción llegue a portales generalistas. | Alertas de prensa local, siempre marcadas como no oficiales. |
-| **VPP / VPA, sorteos y adjudicaciones** | Seguir convocatorias y actividad pública de vivienda protegida. | IGVS, DOG y contratación pública gallega. |
-| **Suelo y expedientes públicos** | Anticipar promociones o desarrollos que aún no se comercializan. | DOG y contratación pública gallega. |
-
-Una alerta de prensa no garantiza que haya viviendas disponibles, ni que una promoción sea adecuada. Hay que comprobar precio, condiciones, plazos y entidad promotora en la fuente original.
-
-## VPP, VPA y cooperativas
-
-No son equivalentes:
-
-- **VPP** (Vivienda de Promoción Pública): vivienda promovida o calificada por el IGVS y adjudicada mediante un procedimiento reglado.
-- **VPA** (Vivienda de Protección Autonómica): vivienda protegida promovida por un agente público o privado. Tiene regímenes y límites de acceso distintos.
-- **Cooperativa**: las personas socias promueven colectivamente la vivienda. Puede ser protegida o libre. Si se autopromueve para uso propio, la inscripción en el Registro de Demandantes no siempre es necesaria, aunque pueden aplicarse otros requisitos.
-
-Consulta la información oficial antes de tomar una decisión:
-
-- [Registro Único de Demandantes de Vivienda de Galicia](https://igvs.xunta.gal/es/registro-de-demandantes-de-vivienda-protegida)
-- [Vivienda de Promoción Pública (VPP)](https://igvs.xunta.gal/es/vivienda-protegida/vivienda-de-promocion-publica-vpp)
-- [Vivienda protegida del IGVS](https://igvs.xunta.gal/es/vivienda-protegida)
-
-## Fuentes
-
-- IGVS: adjudicaciones y sorteos de vivienda protegida.
-- Perfiles de contratación del IGVS y de la Consellería de Vivenda.
-- Diario Oficial de Galicia (DOG), vivienda y territorio.
-- Contratos Públicos de Galicia.
-- Google News RSS para alertas locales de cooperativas y promociones. Esta única fuente no oficial se identifica en la interfaz como **“Alerta de mercado · verificar”**.
-
-## Arquitectura
+El monitor utiliza un enfoque **Flat-File / GitOps** que permite archivar datos de forma ilimitada y servir el frontal de forma 100% gratuita y sin servidores dinámicos:
 
 ```text
-Fuentes públicas / RSS / listado IGVS
-                ↓
-scripts/fetch-rss.mjs
-                ↓
-src/data/monitor.json
-                ↓
-Astro estático
-                ↓
-GitHub Pages
+Fuentes RSS / IGVS / Prensa Local
+              ↓
+  scripts/fetch-rss.mjs
+              ↓ [Firecrawl (Scrapeo de Artículo Completo)]
+              ↓ [OpenRouter LLM (Structured Output)]
+      src/data/monitor.db  ← [Base de Datos SQLite (Histórico Completo)]
+              ↓
+    src/data/monitor.json  ← [Exportación Estática (Últimas 150 Novedades)]
+              ↓
+        Astro Build        ← [Compilación Estática]
+              ↓
+       GitHub Pages        ← [Hosting Gratuito y sin Servidores]
 ```
 
-El refresco diario se ejecuta en GitHub Actions. Si cambian los datos, el workflow confirma `monitor.json` y dispara el despliegue.
+1. **Rastreador**: Un script en Node.js consulta los tablones oficiales de la Xunta de Galicia y los canales de prensa local.
+2. **Raspado Avanzado (Firecrawl)**: Si la noticia proviene de prensa local, utiliza la API de Firecrawl para descargar el artículo completo en formato markdown limpio, saltándose paywalls y renderizaciones complejas.
+3. **Extracción por IA (OpenRouter)**: El modelo `openai/gpt-4o-mini` analiza el texto completo de la noticia y extrae un JSON estructurado con el precio de salida, número de dormitorios, baños, promotora y equipamiento (garaje, trastero, terraza).
+4. **Base de Datos SQLite (`monitor.db`)**: Centraliza los datos en una base de datos relacional nativa en Node.js. Esto conserva todo el historial ilimitado de cooperativas y licencias sin perder las noticias que van saliendo de los feeds RSS.
+5. **Astro + GitHub Pages**: En cada compilación, se exportan las últimas 150 oportunidades a un JSON estático para renderizar el frontal con búsquedas instantáneas, mapa y un **Directorio de Gestoras de Cooperativas** (Gestogar/Nosogar, Xesta, Galivivienda, Libra GP) integrado.
 
-## Desarrollo
+---
 
-Requisitos: Node.js 22 o superior.
+## 🚀 Puesta en Marcha y Desarrollo Local
 
+### Requisitos
+* Node.js 22 o superior (necesario para el soporte nativo del módulo `node:sqlite`).
+
+### Instalación
 ```bash
+git clone https://github.com/tu-usuario/vivienda-coruna.git
+cd vivienda-coruna
 npm ci
-npm test          # reglas geográficas, clasificación y deduplicación
-npm run refresh   # consulta fuentes y actualiza src/data/monitor.json
-npm run dev       # desarrollo local
-npm run build     # build estático en dist/
 ```
 
-## Principios del proyecto
+### Configuración local (`.env`)
+Crea un archivo `.env` en la raíz copiando la plantilla:
+```bash
+cp .env.example .env
+```
+Rellena tus credenciales en el archivo `.env`:
+* **`LLM_API_KEY`**: Tu API Key de OpenRouter.
+* **`FIRECRAWL_API_KEY`**: Tu API Key de Firecrawl (opcional, si deseas raspado completo de noticias).
 
-- **Señal antes que volumen:** una lista corta y verificable es mejor que anuncios duplicados.
-- **Geografía precisa:** se filtra por municipios incluidos, no por la provincia.
-- **Fuentes diferenciadas:** lo oficial y las alertas de mercado nunca se presentan como lo mismo.
-- **Sin backend ni cuentas:** HTML estático, sin cuentas ni JavaScript de cliente para el funcionamiento normal.
-- **Contribuciones pequeñas y testeadas:** añade una prueba si cambias municipios, patrones de clasificación o reglas de deduplicación.
+### Comandos de desarrollo
+```bash
+npm test          # Ejecuta los tests de clasificación y reglas geográficas
+npm run refresh   # Ejecuta el rastreador, consulta la IA y actualiza la base de datos SQLite
+npm run dev       # Arranca el servidor de desarrollo local (Astro)
+npm run build     # Compila el HTML estático final en /dist
+```
 
-## Limitaciones
+---
 
-No existe un registro público único de todas las cooperativas privadas ni de todas las promociones de obra nueva. Por eso este monitor no sustituye la comprobación directa con la cooperativa, promotora o administración responsable.
+## 🤖 Configuración en Producción (GitHub Actions)
 
-No ofrece asesoramiento legal, hipotecario ni de elegibilidad para vivienda protegida.
+Para que el monitor se ejecute solo y se actualice automáticamente en internet todos los días (a las 10:17 CET), debes configurar las credenciales en tu repositorio de GitHub:
 
-## Licencia
+1. Ve a tu repositorio en GitHub.
+2. Navega a **Settings** (Configuración) -> **Secrets and variables** -> **Actions**.
+3. Añade los siguientes dos **Repository Secrets**:
+   * **`LLM_API_KEY`**: Tu API Key de OpenRouter.
+   * **`FIRECRAWL_API_KEY`**: Tu API Key de Firecrawl.
 
-[MIT](LICENSE)
+El flujo de trabajo [.github/workflows/refresh-data.yml](.github/workflows/refresh-data.yml) se encargará de realizar las consultas diarias, guardar los nuevos datos en el archivo SQLite, confirmar los cambios mediante un commit automático en Git y redesplegar el frontal en tu página de GitHub Pages de forma transparente.
+
+---
+
+## ⚖️ Licencia
+
+Proyecto distribuido bajo la licencia [MIT](LICENSE).

@@ -1,36 +1,26 @@
 import Parser from 'rss-parser';
 import iconv from 'iconv-lite';
-import { readFile, writeFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { writeFile } from 'node:fs/promises';
+import { config, AREA_LABELS } from './lib/config.mjs';
 import {
-  AREA_LABELS,
   isActionableMarketAlert,
-  mergeOpportunities,
   toOpportunity,
 } from './lib/monitor.mjs';
+import { extractHousingData } from './lib/llm.mjs';
+import { scrapeUrl } from './lib/firecrawl.mjs';
+import {
+  getDatabase,
+  saveOpportunity,
+  getOpportunity,
+  getAllOpportunities,
+  saveSource,
+  getAllSources,
+  getAllGestoras,
+} from './lib/db.mjs';
 
 const parser = new Parser({ customFields: { item: ['description'] } });
-const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const dataPath = join(root, 'src', 'data', 'monitor.json');
-
-const feeds = [
-  { name: 'IGVS · Adjudicaciones y sorteos', url: 'https://igvs.xunta.gal/es/vivienda-protegida/adjudicaciones-sorteos-de-vivienda-protegida', format: 'html' },
-  { name: 'IGVS', url: 'https://www.contratosdegalicia.gal/rss/perfil-14.rss', format: 'rss' },
-  { name: 'Consellería de Vivenda', url: 'https://www.contratosdegalicia.gal/rss/perfil-515.rss', format: 'rss' },
-  { name: 'DOG · Vivienda y territorio', url: 'https://www.xunta.gal/diario-oficial-galicia/rss/Taxonomia22008_es.rss', format: 'rss' },
-  { name: 'Contratos Públicos de Galicia', url: 'https://www.contratosdegalicia.gal/rss/ultimas-publicacions.rss', format: 'rss', kind: 'official' },
-  { name: 'Prensa local · cooperativas y promociones', url: 'https://news.google.com/rss/search?q=%28%22cooperativa+de+viviendas%22+OR+cohousing+OR+autopromoci%C3%B3n+OR+%22promoci%C3%B3n+nueva%22+OR+%22obra+nueva%22+OR+%22promoci%C3%B3n+inmobiliaria%22%29+%28%22A+Coru%C3%B1a%22+OR+Arteixo+OR+Oleiros+OR+Culleredo+OR+Cambre+OR+Sada+OR+Carral+OR+Abegondo%29&hl=es&gl=ES&ceid=ES:es', format: 'rss', kind: 'market-alert' },
-];
-
-async function loadPrevious() {
-  try {
-    const parsed = JSON.parse(await readFile(dataPath, 'utf8'));
-    return Array.isArray(parsed?.items) ? parsed : { items: [] };
-  } catch {
-    return { items: [] };
-  }
-}
+const dataPath = config.paths.dataJson;
+const feeds = config.feeds;
 
 function parseIgvsListing(html, sourceUrl) {
   const links = html.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi);
@@ -67,7 +57,8 @@ async function parseFeed(feed) {
 
 async function main() {
   const checkedAt = new Date().toISOString();
-  const previous = await loadPrevious();
+  const db = getDatabase();
+  
   const results = await Promise.allSettled(feeds.map(parseFeed));
   const sources = [];
   const candidates = [];
@@ -81,12 +72,17 @@ async function main() {
         .map((item) => ({ ...item, sourceKind: feed.kind || 'official' }))
         .filter((item) => feed.kind !== 'market-alert' || isActionableMarketAlert(item, new Date(checkedAt)));
       candidates.push(...relevant);
-      sources.push({ name: feed.name, url: feed.url, kind: feed.kind || 'official', ok: true, scanned: result.value.length });
+      
+      const source = { name: feed.name, url: feed.url, kind: feed.kind || 'official', ok: true, scanned: result.value.length };
+      sources.push(source);
+      saveSource(db, source);
       console.log(`✓ ${feed.name}: ${result.value.length} revisados, ${relevant.length} relevantes`);
       return;
     }
 
-    sources.push({ name: feed.name, url: feed.url, kind: feed.kind || 'official', ok: false, scanned: 0 });
+    const source = { name: feed.name, url: feed.url, kind: feed.kind || 'official', ok: false, scanned: 0 };
+    sources.push(source);
+    saveSource(db, source);
     console.error(`✗ ${feed.name}: ${result.reason?.message || 'error desconocido'}`);
   });
 
@@ -94,10 +90,71 @@ async function main() {
     throw new Error('No se pudo consultar ninguna fuente; se conservan los datos anteriores');
   }
 
-  const items = mergeOpportunities(candidates, previous.items || [], checkedAt);
-  const monitor = { checkedAt, area: AREA_LABELS, sources, items };
+  // Enriquecer e insertar ítems directamente en SQLite
+  console.log('\n[IA/SQLite] Procesando novedades y enriqueciendo con LLM...');
+  for (const item of candidates) {
+    const old = getOpportunity(db, item.id);
+    
+    if (old && (old.precioMin !== null || old.promotora !== null)) {
+      // Conservar datos ya procesados para no repetir llamadas a la API
+      saveOpportunity(db, {
+        ...item,
+        precioMin: old.precioMin,
+        precioMax: old.precioMax,
+        habitacionesMin: old.habitacionesMin,
+        banosMin: old.banosMin,
+        promotora: old.promotora,
+        totalViviendas: old.totalViviendas,
+        garaje: old.garaje,
+        trastero: old.trastero,
+        terraza: old.terraza,
+      });
+    } else {
+      let contentToAnalyze = item.summary || '';
+
+      if (item.sourceKind === 'market-alert' && item.url) {
+        console.log(`  [Firecrawl] Raspando artículo completo: "${item.title.slice(0, 45)}..."`);
+        const fullMarkdown = await scrapeUrl(item.url);
+        if (fullMarkdown) {
+          contentToAnalyze = fullMarkdown.slice(0, 10000); // limit to ~2500 words to conserve tokens
+          console.log(`  [Firecrawl] Éxito. Artículo obtenido (${contentToAnalyze.length} caracteres).`);
+        } else {
+          console.log(`  [Firecrawl] Inactivo o fallido. Usando snippet de prensa.`);
+        }
+      }
+
+      // Llamar al extractor estructurado
+      const llmData = await extractHousingData(item.title, contentToAnalyze);
+      
+      const enrichedItem = {
+        ...item,
+        precioMin: llmData.precioMin,
+        precioMax: llmData.precioMax,
+        habitacionesMin: llmData.habitacionesMin,
+        banosMin: llmData.banosMin,
+        promotora: llmData.promotora,
+        totalViviendas: llmData.totalViviendas,
+        garaje: llmData.garaje,
+        trastero: llmData.trastero,
+        terraza: llmData.terraza,
+      };
+
+      saveOpportunity(db, enrichedItem);
+      
+      if (enrichedItem.precioMin || enrichedItem.promotora || enrichedItem.habitacionesMin) {
+        console.log(`  [IA Extraído] ${enrichedItem.title.slice(0, 40)}... -> Promotora: ${enrichedItem.promotora || '?'}, Min €: ${enrichedItem.precioMin || '?'}`);
+      }
+    }
+  }
+
+  // Cargar las oportunidades más recientes, las fuentes y las gestoras desde SQLite para exportar al JSON estático
+  const items = getAllOpportunities(db, 150);
+  const dbSources = getAllSources(db);
+  const dbGestoras = getAllGestoras(db);
+
+  const monitor = { checkedAt, area: AREA_LABELS, sources: dbSources, items, gestoras: dbGestoras };
   await writeFile(dataPath, `${JSON.stringify(monitor, null, 2)}\n`);
-  console.log(`\n${items.length} oportunidades guardadas en el área objetivo.`);
+  console.log(`\n${items.length} oportunidades guardadas en SQLite y exportadas al JSON estático.`);
 }
 
 main().catch((error) => {

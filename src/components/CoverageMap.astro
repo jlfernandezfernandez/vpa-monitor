@@ -2,8 +2,23 @@
 const base = import.meta.env.BASE_URL;
 ---
 
-<div class="map-shell">
-  <div id="coverage-map" class="coverage-map" data-geojson-url={`${base}/coverage.geojson`} aria-label="Mapa interactivo de los municipios cubiertos"></div>
+<div class="relative w-full overflow-hidden rounded-2xl border border-border-soft shadow-premium">
+  <div 
+    id="coverage-map" 
+    class="h-[320px] w-full bg-[#eef3f0]" 
+    data-geojson-url={`${base}/coverage.geojson`} 
+    aria-label="Mapa interactivo de los municipios cubiertos"
+  >
+    <div class="absolute inset-0 flex items-center justify-center bg-surface/50 backdrop-blur-sm z-10 pointer-events-none transition-opacity duration-300" id="map-loader">
+      <div class="flex items-center gap-2">
+        <svg class="animate-spin h-5 w-5 text-brand-green" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="text-xs font-semibold text-ink-muted">Cargando mapa...</span>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -11,6 +26,7 @@ const base = import.meta.env.BASE_URL;
   import 'leaflet/dist/leaflet.css';
 
   const element = document.querySelector('#coverage-map');
+  const loader = document.querySelector('#map-loader');
 
   if (element instanceof HTMLElement) {
     const map = L.map(element, {
@@ -29,20 +45,53 @@ const base = import.meta.env.BASE_URL;
       .then((data) => {
         const boundaries = L.geoJSON(data, {
           style: {
-            color: '#28594b',
-            fillColor: '#6ea88f',
-            fillOpacity: 0.24,
-            weight: 2,
+            color: '#1f4d36',       // brand-green
+            fillColor: '#2e7d4f',   // leafy green
+            fillOpacity: 0.16,
+            weight: 2.5,
           },
           onEachFeature(feature, layer) {
-            layer.bindTooltip(feature.properties.name, { sticky: true });
+            layer.bindTooltip(feature.properties.name, { 
+              sticky: true,
+              direction: 'top',
+              className: 'custom-map-tooltip'
+            });
+            
+            // Subtle hover styling for map areas
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setStyle({
+                  fillOpacity: 0.35,
+                  weight: 3
+                });
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                l.setStyle({
+                  fillOpacity: 0.16,
+                  weight: 2.5
+                });
+              }
+            });
           },
         }).addTo(map);
 
-        map.fitBounds(boundaries.getBounds(), { padding: [16, 16] });
+        map.fitBounds(boundaries.getBounds(), { padding: [20, 20] });
+        
+        // Hide loader once loaded
+        if (loader instanceof HTMLElement) {
+          loader.classList.add('opacity-0');
+          setTimeout(() => loader.remove(), 300);
+        }
       })
       .catch(() => {
-        element.textContent = 'No se pudo cargar el mapa.';
+        if (loader instanceof HTMLElement) {
+          loader.querySelector('span')!.textContent = 'No se pudo cargar el mapa.';
+          loader.querySelector('svg')!.remove();
+        } else {
+          element.textContent = 'No se pudo cargar el mapa.';
+        }
       });
   }
 </script>
