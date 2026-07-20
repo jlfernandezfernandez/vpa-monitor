@@ -130,52 +130,86 @@ const municipalities = config.site.municipalities;
             </svg>
           </div>
 
-          <!-- Filters: Signal & Location -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-border-soft">
-            <!-- Source filter -->
-            <div class="flex flex-col gap-2">
-              <span class="text-xs font-bold text-ink-muted uppercase tracking-wider">Tipo de señal</span>
-              <div class="flex rounded-xl bg-canvas p-1 border border-border-soft h-10 items-center">
-                <button 
-                  class="flex-1 text-center h-8 rounded-lg text-xs sm:text-sm font-semibold bg-brand-green text-surface transition-all cursor-pointer"
-                  data-filter-source="all"
-                >
-                  Todas
-                </button>
-                <button 
-                  class="flex-1 text-center h-8 rounded-lg text-xs sm:text-sm font-semibold text-ink-muted hover:bg-surface-hover transition-all cursor-pointer"
-                  data-filter-source="official"
-                >
-                  Oficiales
-                </button>
-                <button 
-                  class="flex-1 text-center h-8 rounded-lg text-xs sm:text-sm font-semibold text-ink-muted hover:bg-surface-hover transition-all cursor-pointer"
-                  data-filter-source="market-alert"
-                >
-                  Prensa
-                </button>
-              </div>
+          <!-- Filter 1: Tipo de señal -->
+          <div class="flex flex-col gap-2 pt-2 border-t border-border-soft">
+            <span class="text-xs font-bold text-ink-muted uppercase tracking-wider">Tipo de señal</span>
+            <div class="flex rounded-xl bg-canvas p-1 border border-border-soft h-10 items-center max-w-md">
+              <button 
+                class="flex-1 text-center h-8 rounded-lg text-xs sm:text-sm font-semibold bg-brand-green text-surface transition-all cursor-pointer"
+                data-filter-source="all"
+              >
+                Todas
+              </button>
+              <button 
+                class="flex-1 text-center h-8 rounded-lg text-xs sm:text-sm font-semibold text-ink-muted hover:bg-surface-hover transition-all cursor-pointer"
+                data-filter-source="official"
+              >
+                Oficiales
+              </button>
+              <button 
+                class="flex-1 text-center h-8 rounded-lg text-xs sm:text-sm font-semibold text-ink-muted hover:bg-surface-hover transition-all cursor-pointer"
+                data-filter-source="market-alert"
+              >
+                Prensa
+              </button>
             </div>
+          </div>
 
-            <!-- Locations filter -->
-            <div class="flex flex-col gap-2">
-              <span class="text-xs font-bold text-ink-muted uppercase tracking-wider">Municipio</span>
-              <div class="flex flex-wrap gap-1.5 items-center min-h-10">
+          <!-- Filter 2: Categoría -->
+          <div class="flex flex-col gap-2 pt-2 border-t border-border-soft">
+            <span class="text-xs font-bold text-ink-muted uppercase tracking-wider">Categoría</span>
+            <div class="flex flex-wrap gap-1.5 items-center min-h-10">
+              <button 
+                class="h-8 px-3 inline-flex items-center rounded-lg border text-xs sm:text-sm font-semibold bg-brand-green-soft text-brand-green border-brand-green/20 cursor-pointer transition-all"
+                data-filter-category="all"
+              >
+                Todas
+              </button>
+              <button 
+                class="h-8 px-3 inline-flex items-center rounded-lg border text-xs sm:text-sm font-semibold bg-surface text-ink-muted border-border-soft hover:border-border-medium hover:bg-surface-hover transition-all cursor-pointer"
+                data-filter-category="Promoción nueva"
+              >
+                Obra Nueva
+              </button>
+              <button 
+                class="h-8 px-3 inline-flex items-center rounded-lg border text-xs sm:text-sm font-semibold bg-surface text-ink-muted border-border-soft hover:border-border-medium hover:bg-surface-hover transition-all cursor-pointer"
+                data-filter-category="Cooperativa"
+              >
+                Cooperativas
+              </button>
+              <button 
+                class="h-8 px-3 inline-flex items-center rounded-lg border text-xs sm:text-sm font-semibold bg-surface text-ink-muted border-border-soft hover:border-border-medium hover:bg-surface-hover transition-all cursor-pointer"
+                data-filter-category="Suelo"
+              >
+                Suelo
+              </button>
+              <button 
+                class="h-8 px-3 inline-flex items-center rounded-lg border text-xs sm:text-sm font-semibold bg-surface text-ink-muted border-border-soft hover:border-border-medium hover:bg-surface-hover transition-all cursor-pointer"
+                data-filter-category="Vivienda protegida"
+              >
+                VPP / VPA Oficial
+              </button>
+            </div>
+          </div>
+
+          <!-- Filter 3: Municipio -->
+          <div class="flex flex-col gap-2 pt-2 border-t border-border-soft">
+            <span class="text-xs font-bold text-ink-muted uppercase tracking-wider">Municipio</span>
+            <div class="flex flex-wrap gap-1.5 items-center min-h-10">
+              <button 
+                class="h-8 px-3 inline-flex items-center rounded-lg border text-xs sm:text-sm font-semibold bg-brand-green-soft text-brand-green border-brand-green/20 cursor-pointer transition-all"
+                data-filter-location="all"
+              >
+                Todos
+              </button>
+              {municipalities.map(loc => (
                 <button 
-                  class="h-8 px-3 inline-flex items-center rounded-lg border text-xs sm:text-sm font-semibold bg-brand-green-soft text-brand-green border-brand-green/20 cursor-pointer transition-all"
-                  data-filter-location="all"
+                  class="h-8 px-3 inline-flex items-center rounded-lg border text-xs sm:text-sm font-semibold bg-surface text-ink-muted border-border-soft hover:border-border-medium hover:bg-surface-hover transition-all cursor-pointer"
+                  data-filter-location={loc}
                 >
-                  Todos
+                  {loc}
                 </button>
-                {municipalities.map(loc => (
-                  <button 
-                    class="h-8 px-3 inline-flex items-center rounded-lg border text-xs sm:text-sm font-semibold bg-surface text-ink-muted border-border-soft hover:border-border-medium hover:bg-surface-hover transition-all cursor-pointer"
-                    data-filter-location={loc}
-                  >
-                    {loc}
-                  </button>
-                ))}
-              </div>
+              ))}
             </div>
           </div>
         </div>
@@ -549,6 +583,7 @@ const municipalities = config.site.municipalities;
 <script>
   const searchInput = document.getElementById('search-input') as HTMLInputElement;
   const sourceFilters = document.querySelectorAll('[data-filter-source]');
+  const categoryFilters = document.querySelectorAll('[data-filter-category]');
   const locationFilters = document.querySelectorAll('[data-filter-location]');
   const roomFilters = document.querySelectorAll('[data-filter-rooms]');
   const bathFilters = document.querySelectorAll('[data-filter-baths]');
@@ -605,6 +640,7 @@ const municipalities = config.site.municipalities;
 
   let searchVal = '';
   let activeSource = 'all';
+  let activeCategory = 'all';
   let activeLocation = 'all';
   let maxPrice = 600000; 
   let minRooms = 0; 
@@ -624,6 +660,7 @@ const municipalities = config.site.municipalities;
         const text = card.getAttribute('data-text') || '';
         const location = card.getAttribute('data-location') || '';
         const sourceKind = card.getAttribute('data-source-kind') || '';
+        const type = card.getAttribute('data-type') || '';
         
         // LLM data attributes
         const cardPriceAttr = card.getAttribute('data-precio-min');
@@ -639,6 +676,7 @@ const municipalities = config.site.municipalities;
 
         const matchesSearch = text.includes(searchVal.toLowerCase());
         const matchesSource = activeSource === 'all' || sourceKind === activeSource;
+        const matchesCategory = activeCategory === 'all' || type === activeCategory;
         
         let matchesLocation = false;
         if (activeLocation === 'all') {
@@ -670,6 +708,7 @@ const municipalities = config.site.municipalities;
         if (
           matchesSearch && 
           matchesSource && 
+          matchesCategory &&
           matchesLocation && 
           matchesPrice && 
           matchesRooms &&
@@ -727,6 +766,22 @@ const municipalities = config.site.municipalities;
       btn.classList.add('bg-brand-green', 'text-surface');
       
       activeSource = btn.getAttribute('data-filter-source') || 'all';
+      updateFilters();
+    });
+  });
+
+  // Bind category toggle filter chips
+  categoryFilters.forEach(btn => {
+    btn.addEventListener('click', () => {
+      categoryFilters.forEach(b => {
+        b.classList.remove('bg-brand-green-soft', 'text-brand-green', 'border-brand-green/20');
+        b.classList.add('bg-surface', 'text-ink-muted', 'border-border-soft', 'hover:border-border-strong');
+      });
+      
+      btn.classList.remove('bg-surface', 'text-ink-muted', 'border-border-soft', 'hover:border-border-strong');
+      btn.classList.add('bg-brand-green-soft', 'text-brand-green', 'border-brand-green/20');
+      
+      activeCategory = btn.getAttribute('data-filter-category') || 'all';
       updateFilters();
     });
   });

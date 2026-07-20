@@ -61,11 +61,18 @@ export function isRelevantTitle(title = '') {
   return Boolean(detectLocation(text)) && HOUSING_PATTERN.test(text) && !NOISE_PATTERN.test(text);
 }
 
-export function detectType(text = '') {
-  if (/\b(?:cooperativa|cohousing|autopromoci[oó]n|vivienda colaborativa)/i.test(text)) return 'Cooperativa';
-  if (/\b(?:obra nueva|promoci[oó]n nueva|promoci[oó]n inmobiliaria|nuevas viviendas|licencia para construir|residencial)\b/i.test(text)) return 'Promoción nueva';
-  if (/\b(?:solo|suelo|parcela|reparcelaci[oó]n)\b/i.test(text)) return 'Suelo';
-  if (/\b(?:rehabilitaci[oó]n|rexurbe)\b/i.test(text)) return 'Rehabilitación';
+export function detectType(text = '', sourceKind = '') {
+  const clean = cleanText(text).toLowerCase();
+  if (/\b(?:cooperativa|cohousing|autopromoci[oó]n|vivienda colaborativa)/i.test(clean)) return 'Cooperativa';
+  if (/\b(?:suelo|parcela|reparcelaci[oó]n|terreno|tuparcela|solares)\b/i.test(clean)) return 'Suelo';
+  if (/\b(?:rehabilitaci[oó]n|rexurbe)\b/i.test(clean)) return 'Rehabilitación';
+  if (/\b(?:obra nueva|promoci[oó]n|licencia|construir|construye|construya|edificio|residencial|viviendas|pisos|chalets|inmobiliaria)\b/i.test(clean) || sourceKind === 'market-alert') {
+    // Si contiene explícitamente "protegida", "social", "pública" o "vpp/vpa" en prensa, sigue siendo protegida
+    if (/\b(?:vpp|vpa|protegida|social|p[uú]blica)\b/i.test(clean)) {
+      return 'Vivienda protegida';
+    }
+    return 'Promoción nueva';
+  }
   return 'Vivienda protegida';
 }
 
@@ -91,6 +98,7 @@ export function toOpportunity(item, source, now = new Date().toISOString()) {
 
   const details = cleanText(item.contentSnippet || item.content || item.description || '');
   const parsedDate = parsePublicationDate(item.isoDate || item.pubDate || '');
+  const sourceKind = source && source.startsWith('Prensa') ? 'market-alert' : 'official';
 
   return {
     id: itemId(item),
@@ -101,7 +109,7 @@ export function toOpportunity(item, source, now = new Date().toISOString()) {
     firstSeenAt: now,
     lastSeenAt: now,
     location: detectLocation(title),
-    type: detectType(title),
+    type: detectType(title, sourceKind),
     status: detectStatus(details),
     summary: details.slice(0, 260),
   };
