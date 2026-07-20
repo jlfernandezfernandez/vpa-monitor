@@ -72,6 +72,11 @@ export const config = {
     apiKey: env.FIRECRAWL_API_KEY || null,
   },
 
+  // Jina Reader (scrape/map). Funciona sin key; la key opcional sube los límites.
+  jina: {
+    apiKey: env.JINA_API_KEY || null,
+  },
+
   // Frontend Configuration for high customization
   site: {
     title: 'Vivienda Coruña — Monitor de cooperativas y obra nueva',

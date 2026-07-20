@@ -7,7 +7,7 @@ import {
   toOpportunity,
 } from './lib/monitor.mjs';
 import { extractHousingData, extractGestoraContactFromText, pickOfficialWebsite, extractPromotionsFromText, discoverGestoraNames } from './lib/llm.mjs';
-import { scrapeUrl, searchWeb, mapSite } from './lib/firecrawl.mjs';
+import { scrapeUrl, searchWeb, mapSite } from './lib/scraper.mjs';
 import {
   getDatabase,
   saveOpportunity,
@@ -174,13 +174,13 @@ async function main() {
       let contentToAnalyze = item.summary || '';
 
       if (item.sourceKind === 'market-alert' && item.url) {
-        console.log(`  [Firecrawl] Raspando artículo completo: "${item.title.slice(0, 45)}..."`);
+        console.log(`  [Scrape] Raspando artículo completo: "${item.title.slice(0, 45)}..."`);
         const fullMarkdown = await scrapeUrl(item.url);
         if (fullMarkdown) {
           contentToAnalyze = fullMarkdown.slice(0, 10000); // limit to ~2500 words to conserve tokens
-          console.log(`  [Firecrawl] Éxito. Artículo obtenido (${contentToAnalyze.length} caracteres).`);
+          console.log(`  [Scrape] Éxito. Artículo obtenido (${contentToAnalyze.length} caracteres).`);
         } else {
-          console.log(`  [Firecrawl] Inactivo o fallido. Usando snippet de prensa.`);
+          console.log(`  [Scrape] Inactivo o fallido. Usando snippet de prensa.`);
         }
       }
 

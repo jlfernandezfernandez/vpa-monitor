@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { extractHousingData, pickOfficialWebsite, extractGestoraContactFromText, extractPromotionsFromText } from '../scripts/lib/llm.mjs';
-import { searchWeb, scrapeUrl } from '../scripts/lib/firecrawl.mjs';
+import { searchWeb, scrapeUrl } from '../scripts/lib/scraper.mjs';
 
 function mockOpenAiResponse(payload) {
   return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(payload) } }] }), {
