@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: write
-  actions: write
 
 concurrency:
   group: refresh-housing-data
@@ -39,5 +38,4 @@ jobs:
           git add src/data/monitor.db
           git commit -m "chore(data): refresh housing monitor"
           git push
-          gh workflow run deploy.yml --ref master
 
