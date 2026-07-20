@@ -207,10 +207,12 @@ async function main() {
 
       if (enrichedItem.promotora) {
         const gestoraId = await ensureGestora(db, enrichedItem.promotora);
+        const promoName = enrichedItem.nombrePromocion || enrichedItem.title.slice(0, 80);
         saveGestoraPromotion(db, {
-          id: enrichedItem.id,
+          // Id por nombre para que dos noticias del mismo proyecto no dupliquen la promoción.
+          id: `${gestoraId}:${slugify(promoName)}`,
           gestoraId,
-          name: enrichedItem.nombrePromocion || enrichedItem.title.slice(0, 80),
+          name: promoName,
           location: enrichedItem.location || 'A Coruña',
           status: enrichedItem.status || 'Sin confirmar',
           details: enrichedItem.summary,
@@ -228,13 +230,23 @@ async function main() {
   console.log(`\n${items.length} oportunidades guardadas en SQLite.`);
 
   // Descubrimiento autónomo: sin lista fija, buscamos quién opera en la zona y registramos.
+  // Varias queries y más resultados por query: una sola búsqueda superficial encontraba
+  // apenas una gestora y se dejaba fuera cooperativas activas conocidas.
   console.log('\n[Descubrimiento] Buscando gestoras/promotoras en la zona...');
-  const discoveryResults = await searchWeb('gestoras de cooperativas de viviendas y promotoras de obra nueva en A Coruña');
-  const discoveredNames = await discoverGestoraNames(discoveryResults);
+  const discoveryQueries = [
+    'gestoras de cooperativas de viviendas en A Coruña',
+    'promotoras de obra nueva en A Coruña',
+    'cooperativas de viviendas en construcción A Coruña Oleiros Culleredo',
+  ];
+  const discoveredNames = new Set();
+  for (const query of discoveryQueries) {
+    const found = await discoverGestoraNames(await searchWeb(query, 10));
+    found.forEach((n) => discoveredNames.add(n));
+  }
   for (const name of discoveredNames) {
     await ensureGestora(db, name);
   }
-  console.log(`  [Descubrimiento] ${discoveredNames.length} gestoras candidatas procesadas.`);
+  console.log(`  [Descubrimiento] ${discoveredNames.size} gestoras candidatas procesadas.`);
 
   // Catálogo real de cada gestora: mapeamos su sitio (los proyectos no suelen estar en la
   // portada) y el LLM lee solo lo scrapeado. Firecrawl trae, el LLM lee, nadie inventa.
