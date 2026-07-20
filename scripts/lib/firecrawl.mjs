@@ -1,44 +1,50 @@
 import { config } from './config.mjs';
 
 /**
- * Uses Firecrawl API to scrape a URL and extract its clean markdown content.
- * Handles rate limits and network issues gracefully by returning null.
- * 
- * @param {string} url - The web page URL to scrape
- * @returns {Promise<string|null>} Scraped markdown content, or null on failure/missing key
+ * POST a Firecrawl endpoint, returning parsed JSON or null on any failure/missing key.
+ *
+ * @param {string} endpoint - Endpoint name (e.g. 'scrape')
+ * @param {Object} body - Request body
+ * @param {string} label - What we're doing, for the warning log
+ * @returns {Promise<Object|null>}
  */
-export async function scrapeUrl(url) {
-  if (!config.firecrawl.apiKey) {
-    return null;
-  }
-
+async function firecrawlPost(endpoint, body, label) {
+  if (!config.firecrawl.apiKey) return null;
   try {
-    const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
+    const response = await fetch(`https://api.firecrawl.dev/v1/${endpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.firecrawl.apiKey}`,
+        Authorization: `Bearer ${config.firecrawl.apiKey}`,
       },
-      body: JSON.stringify({
-        url,
-        formats: ['markdown'],
-      }),
-      signal: AbortSignal.timeout(30_000), // 30 seconds timeout
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(30_000),
     });
-
     if (!response.ok) {
-      console.warn(`[firecrawl] Fallo al raspar ${url}: HTTP ${response.status}`);
+      console.warn(`[firecrawl] Fallo al ${label}: HTTP ${response.status}`);
       return null;
     }
-
-    const json = await response.json();
-    if (json.success && json.data && json.data.markdown) {
-      return json.data.markdown;
-    }
-    
-    return null;
+    return await response.json();
   } catch (error) {
-    console.warn(`[firecrawl] Error en llamada a Firecrawl para ${url}: ${error.message}`);
+    console.warn(`[firecrawl] Error al ${label}: ${error.message}`);
     return null;
   }
+}
+
+/** Scrapes a URL to clean markdown, or null. */
+export async function scrapeUrl(url) {
+  const json = await firecrawlPost('scrape', { url, formats: ['markdown'] }, `raspar ${url}`);
+  return json?.data?.markdown || null;
+}
+
+/** Web search for a company's real pages (to ground data in a real scrape), or []. */
+export async function searchWeb(query) {
+  const json = await firecrawlPost('search', { query, limit: 3 }, `buscar "${query}"`);
+  return (json?.data || []).map((r) => ({ url: r.url, title: r.title }));
+}
+
+/** Maps a site's URLs (project pages aren't usually on the homepage), or []. */
+export async function mapSite(url) {
+  const json = await firecrawlPost('map', { url }, `mapear ${url}`);
+  return json?.links || [];
 }

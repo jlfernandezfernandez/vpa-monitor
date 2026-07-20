@@ -37,7 +37,9 @@ export function getDatabase() {
         totalViviendas INTEGER,
         garaje INTEGER,
         trastero INTEGER,
-        terraza INTEGER
+        terraza INTEGER,
+        enriched INTEGER,
+        nombrePromocion TEXT
       );
 
       CREATE TABLE IF NOT EXISTS sources (
@@ -71,8 +73,14 @@ export function getDatabase() {
       );
     `);
 
-    // Seed default gestoras registry if empty
-    seedGestoras(dbInstance);
+    // Migration: add columns to pre-existing databases that predate them
+    const opportunityColumns = dbInstance.prepare(`PRAGMA table_info(opportunities)`).all().map((c) => c.name);
+    if (!opportunityColumns.includes('enriched')) {
+      dbInstance.exec(`ALTER TABLE opportunities ADD COLUMN enriched INTEGER`);
+    }
+    if (!opportunityColumns.includes('nombrePromocion')) {
+      dbInstance.exec(`ALTER TABLE opportunities ADD COLUMN nombrePromocion TEXT`);
+    }
   }
   return dbInstance;
 }
@@ -88,9 +96,9 @@ export function saveOpportunity(db, op) {
     INSERT INTO opportunities (
       id, title, url, source, sourceKind, publishedAt, firstSeenAt, lastSeenAt,
       location, type, status, summary, precioMin, precioMax, habitacionesMin,
-      banosMin, promotora, totalViviendas, garaje, trastero, terraza
+      banosMin, promotora, totalViviendas, garaje, trastero, terraza, enriched, nombrePromocion
     ) VALUES (
-      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
     ) ON CONFLICT(id) DO UPDATE SET
       lastSeenAt = excluded.lastSeenAt,
       status = CASE WHEN excluded.status IS NOT NULL THEN excluded.status ELSE status END,
@@ -102,7 +110,9 @@ export function saveOpportunity(db, op) {
       totalViviendas = CASE WHEN excluded.totalViviendas IS NOT NULL THEN excluded.totalViviendas ELSE totalViviendas END,
       garaje = CASE WHEN excluded.garaje IS NOT NULL THEN excluded.garaje ELSE garaje END,
       trastero = CASE WHEN excluded.trastero IS NOT NULL THEN excluded.trastero ELSE trastero END,
-      terraza = CASE WHEN excluded.terraza IS NOT NULL THEN excluded.terraza ELSE terraza END
+      terraza = CASE WHEN excluded.terraza IS NOT NULL THEN excluded.terraza ELSE terraza END,
+      enriched = CASE WHEN excluded.enriched = 1 THEN 1 ELSE enriched END,
+      nombrePromocion = CASE WHEN excluded.nombrePromocion IS NOT NULL THEN excluded.nombrePromocion ELSE nombrePromocion END
   `);
 
   stmt.run(
@@ -126,7 +136,9 @@ export function saveOpportunity(db, op) {
     op.totalViviendas !== undefined ? op.totalViviendas : null,
     op.garaje === true ? 1 : (op.garaje === false ? 0 : null),
     op.trastero === true ? 1 : (op.trastero === false ? 0 : null),
-    op.terraza === true ? 1 : (op.terraza === false ? 0 : null)
+    op.terraza === true ? 1 : (op.terraza === false ? 0 : null),
+    op.enriched ? 1 : 0,
+    op.nombrePromocion || null
   );
 }
 
@@ -148,6 +160,7 @@ export function getOpportunity(db, id) {
     garaje: row.garaje === 1 ? true : (row.garaje === 0 ? false : null),
     trastero: row.trastero === 1 ? true : (row.trastero === 0 ? false : null),
     terraza: row.terraza === 1 ? true : (row.terraza === 0 ? false : null),
+    enriched: row.enriched === 1,
   };
 }
 
@@ -170,6 +183,7 @@ export function getAllOpportunities(db, limit = 150) {
     garaje: row.garaje === 1 ? true : (row.garaje === 0 ? false : null),
     trastero: row.trastero === 1 ? true : (row.trastero === 0 ? false : null),
     terraza: row.terraza === 1 ? true : (row.terraza === 0 ? false : null),
+    enriched: row.enriched === 1,
   }));
 }
 
@@ -212,132 +226,6 @@ export function getAllSources(db) {
 }
 
 /**
- * Seeds the database with the verified default gestoras and promotions in A Coruña.
- * 
- * @param {DatabaseSync} db - Database instance
- */
-function seedGestoras(db) {
-  const count = db.prepare('SELECT count(*) as count FROM gestoras').all()[0].count;
-  if (count > 0) return;
-
-  const defaultGestoras = [
-    {
-      id: "gestogar",
-      name: "Gestogar (Nosogar)",
-      logo: "GG",
-      website: "https://nosogar.com",
-      phone: "+34 604 050 000",
-      email: "info@nosogar.com",
-      address: "Calle Juan Flórez, 16, 15004 A Coruña",
-      description: "Gestora líder gallega con amplia trayectoria histórica en la comarca coruñesa. Coordinadores del proyecto cooperativo Mirador de Matogrande en Xuxán.",
-      promotions: [
-        {
-          id: "matogrande-z15",
-          name: "Mirador de Matogrande (Z-15)",
-          location: "Xuxán (A Coruña)",
-          status: "Entregada",
-          details: "Edificio de 90 viviendas protegidas (VPA) en régimen de cooperativa.",
-          link: "https://nosogar.com"
-        },
-        {
-          id: "matogrande-z28",
-          name: "Mirador de Matogrande (Z-28)",
-          location: "Xuxán (A Coruña)",
-          status: "Entregada",
-          details: "Edificio de 90 viviendas protegidas (VPA) en régimen de cooperativa.",
-          link: "https://nosogar.com"
-        }
-      ]
-    },
-    {
-      id: "xesta",
-      name: "Xesta (Xestión de Autopromoción)",
-      logo: "XS",
-      website: "https://xestadeservizos.com",
-      phone: "+34 981 14 00 14",
-      email: "xesta@xestapromocion.com",
-      address: "Calle Federico Tapia, 33, 15005 A Coruña",
-      description: "Gestora local gallega especializada en cooperativas de viviendas, gestionando bloques residenciales de gran escala en Xuxán.",
-      promotions: [
-        {
-          id: "xesta-z32",
-          name: "Cooperativa Z32 Ofimático",
-          location: "Xuxán (A Coruña)",
-          status: "En construcción",
-          details: "Edificio de 70 viviendas colectivas en régimen de cooperativa.",
-          link: "https://xestadeservizos.com"
-        },
-        {
-          id: "xesta-z33",
-          name: "Cooperativa Z33 Ofimático",
-          location: "Xuxán (A Coruña)",
-          status: "En construcción",
-          details: "Edificio de 70 viviendas colectivas en régimen de cooperativa.",
-          link: "https://xestadeservizos.com"
-        }
-      ]
-    },
-    {
-      id: "galivivienda",
-      name: "Galivivienda (Gesvieco)",
-      logo: "GV",
-      website: "https://www.galivivienda.com",
-      phone: "+34 981 12 34 56",
-      email: "info@galivivienda.com",
-      address: "Avenida de Linares Rivas, 30, 15005 A Coruña",
-      description: "Sociedad gestora gallega vinculada al desarrollo de viviendas cooperativas en alquiler asequible y régimen general libre.",
-      promotions: [
-        {
-          id: "galivivienda-z27",
-          name: "Alquiler50 Parque Ofimático (Z-27)",
-          location: "Xuxán (A Coruña)",
-          status: "Comercialización",
-          details: "Proyecto de 224 viviendas cooperativas en régimen de alquiler protegido.",
-          link: "https://www.galivivienda.com"
-        }
-      ]
-    },
-    {
-      id: "libra-gp",
-      name: "Libra Gestión de Proyectos",
-      logo: "LP",
-      website: "https://www.libragp.com",
-      phone: "+34 981 91 26 12",
-      email: "galicia@libragp.com",
-      address: "Plaza de Lugo, 2, 1º Izq, 15004 A Coruña",
-      description: "Gestora nacional especializada en cooperativas residenciales a precio de coste. Promotores del complejo Residencial Finca de Xaz en Oleiros.",
-      promotions: [
-        {
-          id: "libra-xaz",
-          name: "Residencial Finca de Xaz",
-          location: "Oleiros (Finca de Xaz)",
-          status: "Entregada",
-          details: "Chalets unifamiliares integrados en el campo de golf de Oleiros.",
-          link: "https://www.libragp.com"
-        }
-      ]
-    }
-  ];
-
-  const insertGestora = db.prepare(`
-    INSERT INTO gestoras (id, name, logo, website, phone, email, address, description)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  const insertPromo = db.prepare(`
-    INSERT INTO gestora_promotions (id, gestoraId, name, location, status, details, link)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  for (const g of defaultGestoras) {
-    insertGestora.run(g.id, g.name, g.logo, g.website, g.phone, g.email, g.address, g.description);
-    for (const p of g.promotions) {
-      insertPromo.run(p.id, g.id, p.name, p.location, p.status, p.details, p.link);
-    }
-  }
-}
-
-/**
  * Retrieves all cooperative managers along with their promotions.
  * 
  * @param {DatabaseSync} db - Database instance
@@ -363,3 +251,56 @@ export function getAllGestoras(db) {
     };
   });
 }
+
+/**
+ * Inserts or updates a gestora in the database.
+ * 
+ * @param {DatabaseSync} db - Database instance
+ * @param {Object} g - Gestora object
+ */
+export function saveGestora(db, g) {
+  const stmt = db.prepare(`
+    INSERT INTO gestoras (id, name, logo, website, phone, email, address, description)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      name = excluded.name,
+      logo = excluded.logo,
+      website = excluded.website,
+      phone = excluded.phone,
+      email = excluded.email,
+      address = excluded.address,
+      description = excluded.description
+  `);
+  stmt.run(
+    g.id,
+    g.name,
+    g.logo || '',
+    g.website || '',
+    g.phone || '',
+    g.email || '',
+    g.address || '',
+    g.description || ''
+  );
+}
+
+/**
+ * Inserts or updates a promotion for a gestora in the database.
+ * 
+ * @param {DatabaseSync} db - Database instance
+ * @param {Object} p - Promotion object
+ */
+export function saveGestoraPromotion(db, p) {
+  const stmt = db.prepare(`
+    INSERT INTO gestora_promotions (id, gestoraId, name, location, status, details, link)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      gestoraId = excluded.gestoraId,
+      name = excluded.name,
+      location = excluded.location,
+      status = excluded.status,
+      details = excluded.details,
+      link = excluded.link
+  `);
+  stmt.run(p.id, p.gestoraId, p.name, p.location, p.status, p.details, p.link);
+}
+

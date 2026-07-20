@@ -1,11 +1,10 @@
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { env } from 'node:process';
+import { join } from 'node:path';
+import { env, cwd } from 'node:process';
 import dotenv from 'dotenv';
 
-// Determine root directory and load .env using the official dotenv package
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const rootDir = join(__dirname, '..', '..');
+// Root dir is the cwd both scripts and `astro build` run from; import.meta.url
+// breaks here because Vite bundles this file into dist/.prerender/chunks/.
+const rootDir = cwd();
 dotenv.config({ path: join(rootDir, '.env') });
 
 // Canonical list of metropolitan area municipalities (monitored zone)
@@ -38,27 +37,26 @@ const feeds = [
   // 5. Official Public Contracts Portal RSS (Galicia)
   { name: 'Contratos Públicos de Galicia', url: 'https://www.contratosdegalicia.gal/rss/ultimas-publicacions.rss', format: 'rss', kind: 'official' },
   
-  // 6. Press: Cooperatives & Cooperative Managers (Libra GP, Galivivienda, Gescomar, Prygesa, Gestogar, etc.)
-  { 
-    name: 'Prensa · Cooperativas y Gestoras', 
-    url: 'https://news.google.com/rss/search?q=%28%22cooperativa+de+viviendas%22+OR+%22cooperativa+residencial%22+OR+cohousing+OR+autopromoci%C3%B3n+OR+%22Libra+GP%22+OR+%22Libra+Gesti%C3%B3n%22+OR+%22Galivivienda%22+OR+%22Gescomar%22+OR+%22Prygesa%22+OR+%22Gestogar%22%29+AND+%28%22A+Coru%C3%B1a%22+OR+%22La+Coru%C3%B1a%22+OR+Xux%C3%A1n+OR+Arteixo+OR+Oleiros+OR+Culleredo+OR+Cambre+OR+Sada+OR+Bergondo+OR+Carral+OR+Abegondo%29&hl=es&gl=ES&ceid=ES:es', 
-    format: 'rss', 
-    kind: 'market-alert' 
+  // 6. Press: Cooperatives & Cooperative Managers (generic terms, no fixed name list — avoids bias toward known players)
+  {
+    name: 'Prensa · Cooperativas y Gestoras',
+    url: 'https://news.google.com/rss/search?q=%28%22cooperativa+de+viviendas%22+OR+%22cooperativa+residencial%22+OR+cohousing+OR+autopromoci%C3%B3n+OR+%22gestora+de+cooperativas%22+OR+%22viviendas+de+coste%22%29+AND+%28%22A+Coru%C3%B1a%22+OR+%22La+Coru%C3%B1a%22+OR+Xux%C3%A1n+OR+Arteixo+OR+Oleiros+OR+Culleredo+OR+Cambre+OR+Sada+OR+Bergondo+OR+Carral+OR+Abegondo%29&hl=es&gl=ES&ceid=ES:es',
+    format: 'rss',
+    kind: 'market-alert'
   },
-  
-  // 7. Press: Obra Nueva, Developers & Licensing (Metrovacesa, Avantespacia, Aelca, Habitat, Via Célere, Neinor, etc.)
-  { 
-    name: 'Prensa · Promociones y Licencias', 
-    url: 'https://news.google.com/rss/search?q=%28%22obra+nueva%22+OR+%22promoci%C3%B3n+residencial%22+OR+%22licencia+de+obras%22+OR+%22licencia+de+edificaci%C3%B3n%22+OR+%22reparcelaci%C3%B3n%22+OR+%22proyecto+b%C3%A1sico%22+OR+Metrovacesa+OR+Avantespacia+OR+Aelca+OR+%22Habitat+Inmobiliaria%22+OR+%22Via+C%C3%A9lere%22+OR+Neinor%29+AND+%28%22A+Coru%C3%B1a%22+OR+%22La+Coru%C3%B1a%22+OR+Xux%C3%A1n+OR+Someso+OR+Visma+OR+Arteixo+OR+Oleiros+OR+Culleredo+OR+Cambre+OR+Sada+OR+Bergondo%29&hl=es&gl=ES&ceid=ES:es', 
-    format: 'rss', 
-    kind: 'market-alert' 
+
+  // 7. Press: Obra Nueva, Developers & Licensing (generic terms, no fixed name list — avoids bias toward known players)
+  {
+    name: 'Prensa · Promociones y Licencias',
+    url: 'https://news.google.com/rss/search?q=%28%22obra+nueva%22+OR+%22promoci%C3%B3n+residencial%22+OR+%22licencia+de+obras%22+OR+%22licencia+de+edificaci%C3%B3n%22+OR+%22reparcelaci%C3%B3n%22+OR+%22proyecto+b%C3%A1sico%22+OR+%22nueva+promotora%22%29+AND+%28%22A+Coru%C3%B1a%22+OR+%22La+Coru%C3%B1a%22+OR+Xux%C3%A1n+OR+Someso+OR+Visma+OR+Arteixo+OR+Oleiros+OR+Culleredo+OR+Cambre+OR+Sada+OR+Bergondo%29&hl=es&gl=ES&ceid=ES:es',
+    format: 'rss',
+    kind: 'market-alert'
   },
 ];
 
 export const config = {
   paths: {
     root: rootDir,
-    dataJson: join(rootDir, 'src', 'data', 'monitor.json'),
   },
   
   llm: {

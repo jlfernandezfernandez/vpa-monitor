@@ -3,14 +3,16 @@ import '../styles/global.css';
 import Layout from '../layouts/Layout.astro';
 import CoverageMap from '../components/CoverageMap.astro';
 import OpportunityCard from '../components/OpportunityCard.astro';
-import monitor from '../data/monitor.json';
-import { config } from '../../scripts/lib/config.mjs';
+import { config, AREA_LABELS } from '../../scripts/lib/config.mjs';
+import { getDatabase, getAllOpportunities, getAllSources, getAllGestoras } from '../../scripts/lib/db.mjs';
 
-const items = Array.isArray(monitor.items) ? monitor.items : [];
-const sources = Array.isArray(monitor.sources) ? monitor.sources : [];
-const gestoras = Array.isArray(monitor.gestoras) ? monitor.gestoras : [];
+const db = getDatabase();
+const items = getAllOpportunities(db, 150);
+const sources = getAllSources(db);
+const gestoras = getAllGestoras(db);
+const monitor = { area: AREA_LABELS };
 const healthySources = sources.filter((source) => source.ok).length;
-const checkedAt = monitor.checkedAt ? new Date(monitor.checkedAt) : null;
+const checkedAt = items.length ? new Date(Math.max(...items.map(i => new Date(i.lastSeenAt).getTime()))) : null;
 const checkedLabel = checkedAt
   ? checkedAt.toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Madrid' })
   : 'Pendiente';
@@ -497,20 +499,29 @@ const municipalities = config.site.municipalities;
               {gestora.description}
             </p>
 
-            <!-- Contacts -->
+            <!-- Contacts (solo se muestran los datos verificados; vacío se omite) -->
             <div class="space-y-2 mb-6">
-              <div class="flex items-center gap-2.5 text-xs text-ink-muted">
-                <span class="text-base">📍</span>
-                <span>{gestora.address}</span>
-              </div>
-              <div class="flex items-center gap-2.5 text-xs text-ink-muted">
-                <span class="text-base">📞</span>
-                <a href={`tel:${gestora.phone.replace(/\s+/g, '')}`} class="hover:text-brand-green transition-colors">{gestora.phone}</a>
-              </div>
-              <div class="flex items-center gap-2.5 text-xs text-ink-muted">
-                <span class="text-base">✉️</span>
-                <a href={`mailto:${gestora.email}`} class="hover:text-brand-green transition-colors">{gestora.email}</a>
-              </div>
+              {gestora.address && (
+                <div class="flex items-center gap-2.5 text-xs text-ink-muted">
+                  <span class="text-base">📍</span>
+                  <span>{gestora.address}</span>
+                </div>
+              )}
+              {gestora.phone && (
+                <div class="flex items-center gap-2.5 text-xs text-ink-muted">
+                  <span class="text-base">📞</span>
+                  <a href={`tel:${gestora.phone.replace(/\s+/g, '')}`} class="hover:text-brand-green transition-colors">{gestora.phone}</a>
+                </div>
+              )}
+              {gestora.email && (
+                <div class="flex items-center gap-2.5 text-xs text-ink-muted">
+                  <span class="text-base">✉️</span>
+                  <a href={`mailto:${gestora.email}`} class="hover:text-brand-green transition-colors">{gestora.email}</a>
+                </div>
+              )}
+              {!gestora.address && !gestora.phone && !gestora.email && (
+                <p class="text-xs text-ink-light italic">Contacto no verificado todavía.</p>
+              )}
             </div>
 
             <!-- Promotions in area -->

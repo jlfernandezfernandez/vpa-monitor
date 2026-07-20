@@ -6,7 +6,7 @@ import {
   isActionableMarketAlert,
   isFreshMarketAlert,
   isRelevantTitle,
-  mergeOpportunities,
+  normalizeGestoraId,
   normalizeUrl,
   toOpportunity,
 } from '../scripts/lib/monitor.mjs';
@@ -48,14 +48,6 @@ test('descarta alertas de mercado antiguas', () => {
   assert.equal(isActionableMarketAlert({ title: 'Nueva cooperativa de viviendas en Oleiros', publishedAt: '2026-07-01T00:00:00Z' }, new Date('2026-07-20T00:00:00Z')), true);
 });
 
-test('muestra solo la actualización más reciente de cada expediente oficial', () => {
-  const items = mergeOpportunities([
-    { id: 'old', title: 'A Coruña - Inicio de VPP C2024010', publishedAt: '2026-07-01T00:00:00Z', firstSeenAt: '2026-07-01T00:00:00Z', sourceKind: 'official' },
-    { id: 'new', title: 'A Coruña - Sorteo de VPP C2024010', publishedAt: '2026-07-15T00:00:00Z', firstSeenAt: '2026-07-15T00:00:00Z', sourceKind: 'official' },
-  ], [], '2026-07-20T00:00:00Z');
-  assert.deepEqual(items.map((item) => item.id), ['new']);
-});
-
 test('normaliza enlaces y extrae estado', () => {
   assert.equal(
     normalizeUrl('https://www.contratosdegalicia.gal//licitacion?N=123'),
@@ -86,4 +78,10 @@ test('convierte un item RSS al esquema público', () => {
     'IGVS · Adjudicaciones y sorteos',
   );
   assert.equal(igvs.publishedAt, '2026-07-15T00:00:00.000Z');
+});
+
+test('normaliza el nombre de una promotora al mismo id pese a variaciones de redacción del LLM', () => {
+  assert.equal(normalizeGestoraId('grupo Nozar'), normalizeGestoraId('Nozar'));
+  assert.equal(normalizeGestoraId('Nozar S.A.'), normalizeGestoraId('Nozar'));
+  assert.equal(normalizeGestoraId('Promociones Casabriz'), normalizeGestoraId('Casabriz'));
 });

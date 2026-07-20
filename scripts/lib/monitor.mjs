@@ -1,17 +1,5 @@
 import { createHash } from 'node:crypto';
 
-export const AREA_LABELS = [
-  'A Coruña',
-  'Arteixo',
-  'Culleredo · O Burgo',
-  'Oleiros · Perillo · Santa Cruz',
-  'Cambre',
-  'Sada',
-  'Bergondo',
-  'Carral',
-  'Abegondo',
-];
-
 const PLACE_PATTERNS = [
   { label: 'Arteixo', pattern: /\barteixo\b/i },
   { label: 'O Burgo', pattern: /\b(?:o|el) burgo\b/i },
@@ -81,6 +69,34 @@ export function detectStatus(text = '') {
   return match?.[1]?.trim() || null;
 }
 
+const GESTORA_NAME_NOISE = /\b(?:grupo|promociones|inmobiliaria|constructora|s\.?l\.?u?|s\.?a\.?u?)\b\.?/gi;
+
+/**
+ * Normalizes a developer/gestora name so the same real company always maps to
+ * the same id, regardless of how the LLM phrased it across runs (e.g.
+ * "grupo Nozar" vs "Nozar" vs "Nozar S.A.").
+ *
+ * @param {string} name - Raw promotora name as returned by the LLM
+ * @returns {string} Normalized slug-safe id
+ */
+export function normalizeGestoraId(name = '') {
+  return name
+    .toLowerCase()
+    .replace(GESTORA_NAME_NOISE, ' ')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
+/**
+ * Plain slug for arbitrary text (e.g. a promotion name), used to build stable ids.
+ *
+ * @param {string} text - Text to slugify
+ * @returns {string} Slug-safe id fragment
+ */
+export function slugify(text = '') {
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+
 export function itemId(item) {
   const identity = normalizeUrl(item.link || item.guid || '') || cleanText(item.title || '');
   return createHash('sha256').update(identity).digest('hex').slice(0, 16);
@@ -123,39 +139,4 @@ export function isFreshMarketAlert(item, now = new Date()) {
 
 export function isActionableMarketAlert(item, now = new Date()) {
   return isFreshMarketAlert(item, now) && !MARKET_CONTEXT_NOISE_PATTERN.test(cleanText(item.title));
-}
-
-function displayKey(item) {
-  if (item.sourceKind === 'market-alert') return item.id;
-  const caseId = item.title.match(/\bC\d{4}(?:CH)?\d+\b/i)?.[0];
-  return caseId ? `case:${caseId.toUpperCase()}` : item.id;
-}
-
-export function mergeOpportunities(current, previous, now = new Date().toISOString()) {
-  const previousById = new Map(previous.map((item) => [item.id, item]));
-  const merged = new Map();
-
-  for (const item of current) {
-    const old = previousById.get(item.id);
-    merged.set(item.id, {
-      ...item,
-      firstSeenAt: old?.firstSeenAt || item.firstSeenAt || now,
-      lastSeenAt: now,
-    });
-  }
-
-  for (const old of previous) {
-    if (!merged.has(old.id) && old.sourceKind !== 'market-alert' && isRelevantTitle(old.title)) merged.set(old.id, old);
-  }
-
-  const seenDisplayKeys = new Set();
-  return [...merged.values()]
-    .sort((a, b) => (b.publishedAt || b.firstSeenAt).localeCompare(a.publishedAt || a.firstSeenAt))
-    .filter((item) => {
-      const key = displayKey(item);
-      if (seenDisplayKeys.has(key)) return false;
-      seenDisplayKeys.add(key);
-      return true;
-    })
-    .slice(0, 100);
 }
